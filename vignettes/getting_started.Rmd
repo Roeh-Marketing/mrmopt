@@ -127,6 +127,19 @@ fit_ps <- fit_response(
 `midpoint_range` and `ceiling_max` are scale-invariant prior controls —
 you do not need to specify raw Stan priors unless you want to.
 
+> **Backend note:** `fit_response()` defaults to the `cmdstanr` backend, which
+> is approximately **9× faster** than `rstan` for typical response-curve models.
+> If `cmdstanr` is not installed, it falls back to `rstan` automatically.
+> To install `cmdstanr` and its CmdStan toolchain:
+>
+> ```r
+> install.packages("cmdstanr",
+>                  repos = c("https://stan-dev.r-universe.dev", getOption("repos")))
+> cmdstanr::install_cmdstan()
+> ```
+>
+> To force the `rstan` backend, pass `backend = "rstan"` to `fit_response()`.
+
 ---
 
 ## Step 2: Read the output

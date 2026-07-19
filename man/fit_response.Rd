@@ -26,6 +26,7 @@ fit_response(
   infer_length = 1000,
   anchor_strength = NULL,
   anchor_zero = NULL,
+  backend = "cmdstanr",
   refresh = 500,
   ...
 )
@@ -98,6 +99,12 @@ default of `0.05`).}
 synthetic (0, 0) data point. Floor anchoring is now handled via
 `anchor_strength` in \code{\link{mrmopt_prior}}. If set, a deprecation
 warning is emitted and the argument is ignored.}
+
+\item{backend}{Character string specifying the Stan backend for
+\code{\link[brms]{brm}}: \code{"cmdstanr"} (default) or \code{"rstan"}.
+The \code{cmdstanr} backend is approximately 9x faster for typical
+response-curve models. If \code{cmdstanr} or CmdStan is not installed, the
+function falls back to \code{rstan} with an informative message.}
 
 \item{refresh}{How often Stan reports sampling progress (in iterations).
 Default is 500. Set to 0 for silent sampling.}

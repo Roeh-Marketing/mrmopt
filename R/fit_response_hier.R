@@ -34,6 +34,9 @@
 #'   warning, since they cannot identify even a pooled curve. Default \code{5}.
 #' @param control A list of sampler control parameters. Default
 #'   \code{list(adapt_delta = 0.95, max_treedepth = 12)}.
+#' @param backend Character string specifying the Stan backend for
+#'   \code{\link[brms]{brm}}: \code{"cmdstanr"} (default) or \code{"rstan"}.
+#'   See \code{\link{fit_response}} for details.
 #'
 #' @return A fitted model object of class \code{mrmfit_hier} (extending
 #'   \code{brmsfit}).
@@ -83,8 +86,12 @@ fit_response_hier <- function(data,
                               infer_length = 1000,
                               anchor_strength = NULL,
                               anchor_zero = NULL,
+                              backend = "cmdstanr",
                               refresh = 500,
                               ...) {
+
+  # --- Resolve backend (cmdstanr preferred, rstan fallback) ---
+  backend <- hlpr_resolve_backend(backend)
 
   if (is.null(group) || length(group) < 1) {
     stop("'group' must specify at least one grouping column.", call. = FALSE)
@@ -298,6 +305,7 @@ fit_response_hier <- function(data,
     iter = iter,
     warmup = warmup,
     control = control,
+    backend = backend,
     refresh = refresh,
     ...
   )
