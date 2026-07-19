@@ -54,8 +54,12 @@ solutions reflecting Bayesian uncertainty).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">opt_mix</span><span class="op">(</span></span>
 <span>  <span class="va">mrms</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"point"</span>, <span class="st">"posterior"</span><span class="op">)</span>,</span>
-<span>  objective <span class="op">=</span> <span class="st">"max_kpi"</span>,</span>
+<span>  objective <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"max_kpi"</span>, <span class="st">"target_roi"</span>, <span class="st">"target_mroi"</span>, <span class="st">"target_cpk"</span>, <span class="st">"target_mcpk"</span><span class="op">)</span>,</span>
 <span>  budget <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  target_roi <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  target_mroi <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  target_cpk <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  target_mcpk <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_weeks <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  constraints <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  bounds_multiplier <span class="op">=</span> <span class="fl">3</span>,</span>
@@ -82,13 +86,35 @@ posterior median parameters; posterior optimizes over multiple MCMC draws.</p></
 
 
 <dt id="arg-objective">objective<a class="anchor" aria-label="anchor" href="#arg-objective"></a></dt>
-<dd><p>One of `"max_kpi"` (default): maximize total KPI given a
-budget constraint.</p></dd>
+<dd><p>One of `"max_kpi"` (default), `"target_roi"`,
+`"target_mroi"`, `"target_cpk"`, or `"target_mcpk"`.
+See **Details**.</p></dd>
 
 
 <dt id="arg-budget">budget<a class="anchor" aria-label="anchor" href="#arg-budget"></a></dt>
-<dd><p>Total budget for the period. If `NULL` (default), inferred
-from total current weekly spend across channels.</p></dd>
+<dd><p>Total budget for the period. Required for `"max_kpi"`;
+ignored (with a message) for flexible-budget objectives. If `NULL`
+(default), inferred from total current weekly spend.</p></dd>
+
+
+<dt id="arg-target-roi">target_roi<a class="anchor" aria-label="anchor" href="#arg-target-roi"></a></dt>
+<dd><p>Numeric; minimum acceptable portfolio ROI
+(incremental KPI / spend). Required when `objective = "target_roi"`.</p></dd>
+
+
+<dt id="arg-target-mroi">target_mroi<a class="anchor" aria-label="anchor" href="#arg-target-mroi"></a></dt>
+<dd><p>Numeric; target marginal return per dollar. Required
+when `objective = "target_mroi"`.</p></dd>
+
+
+<dt id="arg-target-cpk">target_cpk<a class="anchor" aria-label="anchor" href="#arg-target-cpk"></a></dt>
+<dd><p>Numeric; maximum acceptable average cost per KPI unit
+(spend / incremental KPI). Required when `objective = "target_cpk"`.</p></dd>
+
+
+<dt id="arg-target-mcpk">target_mcpk<a class="anchor" aria-label="anchor" href="#arg-target-mcpk"></a></dt>
+<dd><p>Numeric; maximum acceptable marginal cost per KPI unit.
+Required when `objective = "target_mcpk"`.</p></dd>
 
 
 <dt id="arg-n-weeks">n_weeks<a class="anchor" aria-label="anchor" href="#arg-n-weeks"></a></dt>
@@ -101,7 +127,9 @@ monthly.</p></dd>
 <dt id="arg-constraints">constraints<a class="anchor" aria-label="anchor" href="#arg-constraints"></a></dt>
 <dd><p>A data frame with per-channel bounds. Must contain
 columns `channel`, `min_spend`, `max_spend`. If `NULL` (default),
-constraints are auto-generated from model return rate ranges.</p></dd>
+constraints are auto-generated from model return rate ranges. Note:
+share-based constraints (`min_share`/`max_share`) are only supported
+for `objective = "max_kpi"`.</p></dd>
 
 
 <dt id="arg-bounds-multiplier">bounds_multiplier<a class="anchor" aria-label="anchor" href="#arg-bounds-multiplier"></a></dt>
@@ -120,15 +148,18 @@ to auto-detected spend ranges. Default `3`.</p></dd>
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
 <dd><p>Logical; use `future.apply` for parallel posterior
-optimization. Default `FALSE`. Requires a `future::plan()` to be set.</p></dd>
+optimization. Default `FALSE`. Requires a `future::plan()` to be set.
+Ignored for `"target_mroi"` (per-channel root-finding is fast).</p></dd>
 
 
 <dt id="arg-xtol-rel">xtol_rel<a class="anchor" aria-label="anchor" href="#arg-xtol-rel"></a></dt>
-<dd><p>Relative tolerance for nloptr. Default `1e-8`.</p></dd>
+<dd><p>Relative tolerance for nloptr. Default `1e-8`.
+Ignored for `"target_mroi"`.</p></dd>
 
 
 <dt id="arg-maxeval">maxeval<a class="anchor" aria-label="anchor" href="#arg-maxeval"></a></dt>
-<dd><p>Maximum nloptr evaluations per solve. Default `1000`.</p></dd>
+<dd><p>Maximum nloptr evaluations per solve. Default `1000`.
+Ignored for `"target_mroi"`.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -137,15 +168,24 @@ optimization. Default `FALSE`. Requires a `future::plan()` to be set.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An `opt_mix_result` S3 object. Both methods return the same
+    <p>An `opt_mix_result` S3 object. All objectives return the same
   top-level structure:</p><ul><li><p>`$solution` — tibble with one row per channel containing current
       and optimal spend, KPI, units, cost-per, response rate, and share
       columns. Posterior results include `_lower`/`_upper` CI columns.</p></li>
 <li><p>`$constraints` — tibble: channel, lb, ub, x0.</p></li>
 <li><p>`$budget_info` — list: total_budget, weekly_budget, n_weeks,
-      current_weekly.</p></li>
+      current_weekly. For flexible-budget objectives (`target_roi`,
+      `target_mroi`), `weekly_budget` and `total_budget` are *outputs*
+      computed from the optimal solution.</p></li>
 <li><p>`$method` — `"point"` or `"posterior"`.</p></li>
+<li><p>`$objective` — the objective used.</p></li>
 <li><p>`$mrms` — the named list of `mrmfit` models.</p></li>
+</ul><p>Objective-specific fields:</p><ul><li><p>`$target_roi` / `$achieved_roi` — for `"target_roi"` objective.</p></li>
+<li><p>`$target_mroi` / `$channel_mroi` — for `"target_mroi"` objective.</p></li>
+<li><p>`$target_cpk` / `$achieved_cpk` — for `"target_cpk"` objective.
+      The underlying `$target_roi` / `$achieved_roi` are also available.</p></li>
+<li><p>`$target_mcpk` / `$channel_mcpk` — for `"target_mcpk"` objective.
+      The underlying `$target_mroi` / `$channel_mroi` are also available.</p></li>
 </ul><p>Point-only fields: `$nloptr_result`, `$response_funs`. <br>
   Posterior-only fields: `$draws_matrix`, `$kpi_matrix`,
   `$solution_draws`, `$n_draws`, `$draw_ids`.</p>
@@ -153,6 +193,39 @@ optimization. Default `FALSE`. Requires a `future::plan()` to be set.</p></dd>
   [opt_table()] for a tidy comparison tibble, and [plot()] or the
   standalone `opt_plot_*` functions for visualizations.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Five objectives are available (the last two are cost-per-KPI
+convenience wrappers around the ROI objectives):</p><dl><dt>`"max_kpi"` (default)</dt>
+<dd><p>Maximize total KPI given a fixed budget
+    constraint.</p></dd>
+
+  <dt>`"target_roi"`</dt>
+<dd><p>Maximize incremental KPI while keeping portfolio
+    ROI \(\ge\) `target_roi`.
+    The budget is an *output*, not an input.
+    ROI is defined as total incremental KPI (f(x) - f(0)) divided by
+    total spend.</p></dd>
+
+  <dt>`"target_mroi"`</dt>
+<dd><p>Set each channel's spend to the point where its
+    marginal return (dy/dx) equals `target_mroi`.
+    The budget is an *output* — the sum of per-channel solutions.</p></dd>
+
+  <dt>`"target_cpk"`</dt>
+<dd><p>Same optimization as `"target_roi"` but framed
+    as a cost-per-KPI ceiling: keep average CPK \(\le\) `target_cpk`.
+    Internally converts to `target_roi = 1 / target_cpk`. Useful when the
+    KPI is a non-revenue metric (leads, visits, etc.).</p></dd>
+
+  <dt>`"target_mcpk"`</dt>
+<dd><p>Same optimization as `"target_mroi"` but framed
+    as a marginal cost-per-KPI threshold: stop spending on a channel once
+    the marginal cost of the next KPI unit exceeds `target_mcpk`.
+    Internally converts to `target_mroi = 1 / target_mcpk`.</p></dd>
+
+
+</dl></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
@@ -163,7 +236,7 @@ optimization. Default `FALSE`. Requires a `future::plan()` to be set.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

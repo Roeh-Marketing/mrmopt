@@ -1,11 +1,15 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  diagnostics_and_comparison: diagnostics_and_comparison.html
   getting_started: getting_started.html
+  hierarchical_models: hierarchical_models.html
+  optimization: optimization.html
+  priors_and_tuning: priors_and_tuning.html
   response_curve_theory: response_curve_theory.html
   roadmap: roadmap.html
-last_built: 2026-07-07T20:03Z
+last_built: 2026-07-19T17:38Z
 urls:
   reference: https://bdshaff.github.io/mrmopt/reference
   article: https://bdshaff.github.io/mrmopt/articles

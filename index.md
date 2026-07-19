@@ -13,8 +13,8 @@ flexible enough for rigorous applied work.
 
 ``` r
 
-# install.packages("devtools")
-devtools::install_github("bdshaff/mrmopt")
+# install.packages("pak")
+pak::pak("bdshaff/mrmopt")
 ```
 
 ## Workflow

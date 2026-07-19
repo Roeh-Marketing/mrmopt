@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Model Diagnostics and Curve Comparison • mrmopt</title>
+<title>Diagnostics and Model Comparison • mrmopt</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -13,9 +13,12 @@
 <link rel="manifest" href="../site.webmanifest">
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Lora-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Inter-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/Fira_Code-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Model Diagnostics and Curve Comparison">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Diagnostics and Model Comparison">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -59,7 +62,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Model Diagnostics and Curve Comparison</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Diagnostics and Model Comparison</h1>
             
       
 
@@ -68,480 +71,448 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bdshaff.github.io/mrmopt/">mrmopt</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/paul-buerkner/brms" class="external-link">brms</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://purrr.tidyverse.org/" class="external-link">purrr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h2>
-<p>After fitting a response curve model there are two questions to
-answer before acting on the results:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Did the sampler converge?</strong> Bayesian inference via
-MCMC can fail silently — the sampler may return estimates even when the
-chains have not mixed properly. Diagnostics catch this.</li>
-<li>
-<strong>Is this the right curve shape for the data?</strong> With
-six curve families available, it is worth checking whether the chosen
-type fits better or worse than alternatives.</li>
-</ol>
-<p>This vignette covers both. It assumes you have worked through the
-<em>Fitting and Analyzing Response Curve Models</em> vignette and have a
-fitted model in hand.</p>
+<p>Fitting a response curve is the easy part. Knowing whether the fit is
+trustworthy requires checking convergence diagnostics, evaluating
+predictive performance, and comparing candidate curve types. This
+vignette covers the full diagnostic and comparison workflow.</p>
 <hr>
-</div>
 <div class="section level2">
-<h2 id="setup-fitting-two-curve-types">Setup: Fitting Two Curve Types<a class="anchor" aria-label="anchor" href="#setup-fitting-two-curve-types"></a>
+<h2 id="fit-two-candidate-models">Fit two candidate models<a class="anchor" aria-label="anchor" href="#fit-two-candidate-models"></a>
 </h2>
-<p>We fit both a <strong>Gompertz</strong> and a
-<strong>Logistic</strong> curve to the Paid Search channel from
-<code>mrmopt_data</code>. This gives us a concrete comparison pair for
-the second half of the vignette.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">mrmopt_data</span><span class="op">)</span></span>
+<p>We’ll work with the Paid Social channel from
+<code>mrmopt_data</code>, comparing a Gompertz and a logistic curve:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">social_data</span> <span class="op">&lt;-</span> <span class="va">mrmopt_data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">channel</span> <span class="op">==</span> <span class="st">"Paid Social"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">paid_search</span> <span class="op">&lt;-</span> <span class="va">mrmopt_data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">channel</span> <span class="op">==</span> <span class="st">"Paid Search"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fit_gompertz</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_response.html">fit_response</a></span><span class="op">(</span></span>
-<span>  data   <span class="op">=</span> <span class="va">paid_search</span>,</span>
-<span>  spend  <span class="op">=</span> <span class="st">"spend"</span>,</span>
-<span>  kpi    <span class="op">=</span> <span class="st">"conversions"</span>,</span>
-<span>  date   <span class="op">=</span> <span class="st">"week"</span>,</span>
-<span>  type   <span class="op">=</span> <span class="st">"gompertz"</span>,</span>
-<span>  chains <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  iter   <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>  seed   <span class="op">=</span> <span class="fl">8214</span></span>
+<span><span class="va">fit_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_response.html">fit_response</a></span><span class="op">(</span></span>
+<span>  data           <span class="op">=</span> <span class="va">social_data</span>,</span>
+<span>  spend          <span class="op">=</span> <span class="st">"spend"</span>,</span>
+<span>  kpi            <span class="op">=</span> <span class="st">"conversions"</span>,</span>
+<span>  date           <span class="op">=</span> <span class="st">"week"</span>,</span>
+<span>  type           <span class="op">=</span> <span class="st">"gompertz"</span>,</span>
+<span>  midpoint_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  ceiling_max    <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  refresh        <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  iter <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  chains <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; conversions ~ c + (d - c) * exp(-exp(b * (spend - e))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span>
 <span></span>
 <span><span class="va">fit_logistic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_response.html">fit_response</a></span><span class="op">(</span></span>
-<span>  data   <span class="op">=</span> <span class="va">paid_search</span>,</span>
-<span>  spend  <span class="op">=</span> <span class="st">"spend"</span>,</span>
-<span>  kpi    <span class="op">=</span> <span class="st">"conversions"</span>,</span>
-<span>  date   <span class="op">=</span> <span class="st">"week"</span>,</span>
-<span>  type   <span class="op">=</span> <span class="st">"logistic"</span>,</span>
-<span>  chains <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  iter   <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>  seed   <span class="op">=</span> <span class="fl">3907</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span>  data           <span class="op">=</span> <span class="va">social_data</span>,</span>
+<span>  spend          <span class="op">=</span> <span class="st">"spend"</span>,</span>
+<span>  kpi            <span class="op">=</span> <span class="st">"conversions"</span>,</span>
+<span>  date           <span class="op">=</span> <span class="st">"week"</span>,</span>
+<span>  type           <span class="op">=</span> <span class="st">"logistic"</span>,</span>
+<span>  midpoint_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  ceiling_max    <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  refresh        <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  iter <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  chains <span class="op">=</span> <span class="fl">2</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; conversions ~ c + ((d - c)/(1 + exp(b * (spend - e)))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
-<h2 id="part-1-mcmc-diagnostics">Part 1: MCMC Diagnostics<a class="anchor" aria-label="anchor" href="#part-1-mcmc-diagnostics"></a>
+<h2 id="step-1-mcmc-convergence">Step 1: MCMC convergence<a class="anchor" aria-label="anchor" href="#step-1-mcmc-convergence"></a>
 </h2>
+<p>Before interpreting any results, verify that the sampler converged. A
+model that hasn’t converged can produce arbitrarily wrong parameter
+estimates.</p>
 <div class="section level3">
-<h3 id="why-diagnostics-matter">Why Diagnostics Matter<a class="anchor" aria-label="anchor" href="#why-diagnostics-matter"></a>
+<h3 id="trace-plots">Trace plots<a class="anchor" aria-label="anchor" href="#trace-plots"></a>
 </h3>
-<p>MCMC samplers like Stan’s No-U-Turn Sampler (NUTS) explore the
-posterior distribution by simulating correlated random walks across the
-parameter space. When the posterior is well-behaved and the model is
-identifiable, multiple independent chains will converge on the same
-region and mix freely. When they do not, parameter estimates and
-credible intervals cannot be trusted regardless of how plausible they
-look.</p>
-<p>Nonlinear models with informative priors are generally well-behaved,
-but poorly specified priors or insufficient data can produce
-pathological posteriors. Running diagnostics after every fit is a good
-habit.</p>
+<p><code><a href="../reference/mrm_plot_diagnostics.html">mrm_plot_diagnostics()</a></code> produces trace plots for the four
+curve parameters plus a posterior predictive check:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrm_plot_diagnostics.html">mrm_plot_diagnostics</a></span><span class="op">(</span><span class="va">fit_gomp</span><span class="op">)</span></span></code></pre></div>
+<p><img src="diagnostics_and_comparison_files/figure-html/diag-gomp-1.png" class="r-plt" alt="" width="672"></p>
+<div class="callout">
+<p>Note: An <code>mrmfit</code> object is a <code>brms</code> object so
+further diagnostics with functions from <code>bayesplot</code> will work
+as expected</p>
 </div>
-<div class="section level3">
-<h3 id="the-diagnostics-plot">The Diagnostics Plot<a class="anchor" aria-label="anchor" href="#the-diagnostics-plot"></a>
-</h3>
-<p><code>mrm_plot_diagnostics(fit)</code> shows two panels: trace plots
-for the four parameters and a posterior predictive check.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrm_plot_diagnostics.html">mrm_plot_diagnostics</a></span><span class="op">(</span><span class="va">fit_gompertz</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="diagnostics_and_comparison_files/figure-html/fig-diagnostics-1.png" class="r-plt" alt="Diagnostics for the Gompertz fit. Trace plots (top) show chain mixing across b, c, d, e. The PPC (bottom) overlays observed data against 200 posterior predictive draws." width="672"><p class="caption">
-Diagnostics for the Gompertz fit. Trace plots (top) show chain mixing
-across b, c, d, e. The PPC (bottom) overlays observed data against 200
-posterior predictive draws.
-</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="reading-trace-plots">Reading Trace Plots<a class="anchor" aria-label="anchor" href="#reading-trace-plots"></a>
-</h3>
-<p>Each trace plot shows the sampled parameter value at every
-post-warmup iteration, coloured by chain. A well-converged model
-shows:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">fit_logistic</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "mrmfit"  "brmsfit"</span></span></code></pre></div>
+<p><strong>What to look for in trace plots:</strong></p>
 <ul>
 <li>
-<strong>Good mixing</strong>: chains interleave freely with one
-another — no chain stays consistently above or below the others.</li>
+<strong>Good</strong>: Chains overlap completely, forming a “fuzzy
+caterpillar.” No trends, no drift, no one chain stuck in a different
+region.</li>
 <li>
-<strong>Stationarity</strong>: the traces fluctuate around a stable
-central value without drifting upward or downward over iterations.</li>
-<li>
-<strong>Similar variance</strong>: all chains explore roughly the
-same range.</li>
+<strong>Bad</strong>: Chains that separate (bimodal posterior),
+chains that trend upward or downward (haven’t converged), or chains that
+get stuck in one region for many iterations (poor mixing).</li>
 </ul>
-<p>Warning signs to look for:</p>
-<ul>
-<li>
-<strong>Stuck chains</strong>: one chain sits at a very different
-value from the others for extended stretches.</li>
-<li>
-<strong>Funnel geometry</strong>: one chain has much lower variance
-than the others, suggesting it is trapped in a narrow region of the
-posterior.</li>
-<li>
-<strong>Drift or trend</strong>: a slow upward or downward movement
-suggests the chain has not reached stationarity.</li>
-</ul>
-<p>If any of these appear, try increasing <code>adapt_delta</code>
-(e.g., <code>control = list(adapt_delta = 0.99)</code>), tightening
-priors, or increasing the number of warmup iterations.</p>
 </div>
 <div class="section level3">
-<h3 id="r-hat-and-ess">R-hat and ESS<a class="anchor" aria-label="anchor" href="#r-hat-and-ess"></a>
+<h3 id="numerical-diagnostics-rhat-and-ess">Numerical diagnostics: Rhat and ESS<a class="anchor" aria-label="anchor" href="#numerical-diagnostics-rhat-and-ess"></a>
 </h3>
-<p>The trace plot gives a visual impression; two numerical summaries
-give a formal verdict.</p>
-<p><strong>R-hat</strong> (the potential scale reduction factor)
-measures convergence by comparing within-chain variance to between-chain
-variance. When chains have mixed well, these are equal and R-hat ≈ 1.
-Values above 1.01 are a warning sign; above 1.05 indicate a convergence
-problem.</p>
-<p><strong>ESS</strong> (effective sample size) measures how many
-independent samples the chains are worth, accounting for
-autocorrelation. Low ESS means the posterior estimate is based on fewer
-independent draws than the nominal sample count. As a rough rule of
-thumb, aim for ESS &gt; 400 for reliable estimates.</p>
-<p>Both are extracted from the brms summary:</p>
+<p>The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method reports Rhat and Bulk ESS for each
+parameter:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">posterior_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_gompertz</span><span class="op">)</span><span class="op">$</span><span class="va">fixed</span></span>
-<span><span class="va">posterior_summary</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"b_Intercept|c_Intercept|d_Intercept|e_Intercept"</span>,</span>
-<span>                         <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">posterior_summary</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Estimate"</span>, <span class="st">"l-95% CI"</span>, <span class="st">"u-95% CI"</span>, <span class="st">"Rhat"</span>, <span class="st">"Bulk_ESS"</span>, <span class="st">"Tail_ESS"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;                Estimate    l-95% CI    u-95% CI      Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; b_Intercept -9.72677503 -9.98469592 -9.26670047 1.0013748 445.6743 414.6111</span></span>
-<span><span class="co">#&gt; c_Intercept  0.03258653  0.01745291  0.04691426 1.0011534 408.1136 418.1169</span></span>
-<span><span class="co">#&gt; d_Intercept  0.98760217  0.97435875  1.00395149 0.9997084 525.0035 518.4115</span></span>
-<span><span class="co">#&gt; e_Intercept  0.46834456  0.46362654  0.47274918 1.0027166 427.9659 548.6615</span></span></code></pre></div>
-<p>Healthy values have Rhat ≤ 1.01 and ESS well above 400 for both bulk
-and tail. Tail ESS is particularly important for credible interval
-accuracy — the 2.5th and 97.5th percentiles are estimated from fewer
-effective draws than the mean.</p>
-<p>To inspect the full brms convergence output:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">brms</span><span class="fu">::</span><span class="fu">summary</span><span class="op">(</span><span class="va">fit_gompertz</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="posterior-predictive-check">Posterior Predictive Check<a class="anchor" aria-label="anchor" href="#posterior-predictive-check"></a>
-</h3>
-<p>The PPC panel overlays the observed KPI distribution (dark line)
-against 200 replicated datasets drawn from the posterior (light lines).
-The question it answers is: <em>could the model have generated data like
-what we observed?</em></p>
-<p>A well-calibrated model produces replicated datasets that span the
-observed distribution. Warning signs:</p>
-<ul>
-<li>
-<strong>Mode mismatch</strong>: the observed peak falls in the tail
-of the replicated distributions — the model consistently predicts too
-high or too low.</li>
-<li>
-<strong>Width mismatch</strong>: replicated datasets are
-systematically narrower or wider than observed — the model is
-overconfident or underconfident about the KPI variance.</li>
-<li>
-<strong>Skew mismatch</strong>: replicated distributions have a
-different skew than the observed data.</li>
-</ul>
-<p>For a standalone PPC with more draws:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/pp_check.html" class="external-link">pp_check</a></span><span class="op">(</span><span class="va">fit_gompertz</span>, ndraws <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span></code></pre></div>
-<div class="callout-note">
-<p>A good PPC does not prove the model is correct — it only shows it is
-not obviously wrong. Models can pass a PPC while still being
-misspecified in ways that matter for extrapolation or range
-analysis.</p>
-</div>
-<hr>
-</div>
-</div>
-<div class="section level2">
-<h2 id="part-2-bayes-r²">Part 2: Bayes R²<a class="anchor" aria-label="anchor" href="#part-2-bayes-r%C2%B2"></a>
-</h2>
-<p>Bayes R² estimates the proportion of KPI variance explained by the
-model, derived from posterior predictive draws rather than a single
-point estimate. This gives it a natural credible interval rather than a
-single number.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_gompertz</span><span class="op">$</span><span class="va">R2</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
-<span><span class="co">#&gt;   Estimate Est.Error  Q2.5 Q97.5</span></span>
-<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    0.993  0.000<span style="text-decoration: underline;">216</span> 0.992 0.993</span></span></code></pre></div>
-<p>Interpretation guidelines:</p>
-<ul>
-<li>
-<strong>High R² with tight interval</strong>: the model fits well
-and the uncertainty about fit quality is low.</li>
-<li>
-<strong>High R² with wide interval</strong>: the model fits well on
-average but the credible interval reflects uncertainty — possibly
-because the posterior has high variance in the saturated region.</li>
-<li>
-<strong>Low R²</strong>: the model explains little variance. Check
-whether the data have sufficient spend variation and whether the curve
-type is appropriate.</li>
-</ul>
-<p>R² alone should not drive curve selection — two curve types can have
-similar R² while making very different predictions in unobserved spend
-regions. Use R² alongside visual model comparison.</p>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="part-3-comparing-curve-types">Part 3: Comparing Curve Types<a class="anchor" aria-label="anchor" href="#part-3-comparing-curve-types"></a>
-</h2>
-<div class="section level3">
-<h3 id="when-to-compare">When to Compare<a class="anchor" aria-label="anchor" href="#when-to-compare"></a>
-</h3>
-<p>After verifying that a model has converged, the natural next question
-is whether a different curve type would fit the data better or produce
-more defensible predictions. The most common comparisons are:</p>
-<ul>
-<li>
-<strong>Gompertz vs. Logistic</strong> for digital channels: the
-Gompertz’s early inflection often fits performance media well; the
-Logistic’s symmetry can be more appropriate when saturation is
-gradual.</li>
-<li>
-<strong>Logistic vs. Log-Logistic</strong> when unsure whether the
-response operates on a linear or proportional spend scale.</li>
-<li>
-<strong>Gompertz vs. Reflected Gompertz</strong> when the data
-suggest a slow early ramp rather than a quick one.</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="overlaying-response-curves">Overlaying Response Curves<a class="anchor" aria-label="anchor" href="#overlaying-response-curves"></a>
-</h3>
-<p><code><a href="../reference/mrms_plot_compare.html">mrms_plot_compare()</a></code> takes a named list of fitted models
-and overlays their response curves, return curves, or cost-per curves on
-a single axis. Names are used as legend labels.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span></span>
-<span>  models    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Gompertz <span class="op">=</span> <span class="va">fit_gompertz</span>, Logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="st">"response"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="diagnostics_and_comparison_files/figure-html/fig-compare-response-1.png" class="r-plt" alt="Gompertz and Logistic response curves overlaid on the same axis. Both fit the observed spend range well; they diverge in the extrapolated region above ~$70k." width="672"><p class="caption">
-Gompertz and Logistic response curves overlaid on the same axis. Both
-fit the observed spend range well; they diverge in the extrapolated
-region above ~$70k.
-</p>
-</div>
-<p>The region where the two curves agree — broadly, within the observed
-spend range — is the region where the data inform the model. The region
-where they diverge is where curve choice matters most for planning and
-optimization.</p>
-</div>
-<div class="section level3">
-<h3 id="comparing-returns">Comparing Returns<a class="anchor" aria-label="anchor" href="#comparing-returns"></a>
-</h3>
-<p>The return comparison is often more revealing than the response
-comparison, because it directly shows how each model characterises the
-efficiency of incremental spend.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span></span>
-<span>  models    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Gompertz <span class="op">=</span> <span class="va">fit_gompertz</span>, Logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="st">"return"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="diagnostics_and_comparison_files/figure-html/fig-compare-return-1.png" class="r-plt" alt="AR and MR curves for both models. The Gompertz's earlier inflection gives it a higher marginal return peak at lower spend; the Logistic's symmetric shape keeps MR higher for longer." width="672"><p class="caption">
-AR and MR curves for both models. The Gompertz’s earlier inflection
-gives it a higher marginal return peak at lower spend; the Logistic’s
-symmetric shape keeps MR higher for longer.
-</p>
-</div>
-<p>Two things to look for here:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Peak MR location</strong>: does one model place peak
-efficiency at a substantially different spend level? If so, the models
-would give different investment recommendations.</li>
-<li>
-<strong>Decay rate</strong>: how quickly does MR fall as spend
-increases? A steeper decay justifies tighter spend caps in
-optimization.</li>
-</ol>
-</div>
-<div class="section level3">
-<h3 id="comparing-cost-per-kpi">Comparing Cost Per KPI<a class="anchor" aria-label="anchor" href="#comparing-cost-per-kpi"></a>
-</h3>
-<p>The cost-per comparison is the most operationally interpretable view.
-It directly shows the financial cost of delivering a conversion at each
-spend level.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span></span>
-<span>  models    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Gompertz <span class="op">=</span> <span class="va">fit_gompertz</span>, Logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="st">"costper"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="diagnostics_and_comparison_files/figure-html/fig-compare-costper-1.png" class="r-plt" alt="Cost per conversion curves for both models. Agreement in the observed range gives confidence that either model would support similar spend recommendations." width="672"><p class="caption">
-Cost per conversion curves for both models. Agreement in the observed
-range gives confidence that either model would support similar spend
-recommendations.
-</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="faceted-layout">Faceted Layout<a class="anchor" aria-label="anchor" href="#faceted-layout"></a>
-</h3>
-<p>When comparing more than two models or when the curves are too close
-to distinguish on a single axis, use <code>layout = "facet"</code>:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span></span>
-<span>  models    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Gompertz <span class="op">=</span> <span class="va">fit_gompertz</span>, Logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="st">"response"</span>,</span>
-<span>  layout    <span class="op">=</span> <span class="st">"facet"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="diagnostics_and_comparison_files/figure-html/fig-compare-facet-1.png" class="r-plt" alt="Faceted comparison gives each model its own panel, making the individual shapes easier to read." width="672"><p class="caption">
-Faceted comparison gives each model its own panel, making the individual
-shapes easier to read.
-</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="comparing-r²-across-models">Comparing R² Across Models<a class="anchor" aria-label="anchor" href="#comparing-r%C2%B2-across-models"></a>
-</h3>
-<p>Bayes R² provides a single-number summary of relative fit quality.
-When comparing multiple fitted models, collect R² values into a
-table:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Gompertz <span class="op">=</span> <span class="va">fit_gompertz</span>, Logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://purrr.tidyverse.org/reference/map_dfr.html" class="external-link">map_dfr</a></span><span class="op">(</span><span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">.x</span><span class="op">$</span><span class="va">R2</span><span class="op">)</span>, .id <span class="op">=</span> <span class="st">"model"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">Estimate</span>, <span class="va">Est.Error</span>, <span class="va">Q2.5</span>, <span class="va">Q97.5</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">Estimate</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      model  Estimate    Est.Error      Q2.5     Q97.5</span></span>
-<span><span class="co">#&gt; 1 Gompertz 0.9929706 0.0002164212 0.9923802 0.9932071</span></span>
-<span><span class="co">#&gt; 2 Logistic 0.9806867 0.0008769886 0.9785144 0.9817294</span></span></code></pre></div>
-<p>A model with meaningfully higher R² and a credible interval that does
-not overlap the competitor’s is a clear winner on in-sample fit. When
-intervals overlap substantially, R² does not discriminate between the
-models — visual comparison of curves and PPCs should carry more
-weight.</p>
-</div>
-<div class="section level3">
-<h3 id="comparing-summary-ranges">Comparing Summary Ranges<a class="anchor" aria-label="anchor" href="#comparing-summary-ranges"></a>
-</h3>
-<p>The curve comparison plots reveal shape differences; the summary
-range table reveals whether those differences translate into materially
-different spend recommendations. If both models suggest similar
-<code>range_min</code> and <code>range_max</code> values, the practical
-implications of choosing one over the other are small.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span></span>
-<span>  <span class="va">fit_gompertz</span><span class="op">$</span><span class="va">summary</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"Gompertz"</span><span class="op">)</span>,</span>
-<span>  <span class="va">fit_logistic</span><span class="op">$</span><span class="va">summary</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"Logistic"</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">range_min_spend</span>, <span class="va">range_peak_spend</span>, <span class="va">range_max_spend</span>,</span>
-<span>         <span class="va">range_min_mr</span>, <span class="va">range_peak_mr</span>, <span class="va">range_max_mr</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
-<span><span class="co">#&gt;   model    range_min_spend range_peak_spend range_max_spend range_min_mr</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Gompertz          <span style="text-decoration: underline;">41</span>976.           <span style="text-decoration: underline;">53</span>797.          <span style="text-decoration: underline;">46</span>877.       0.065<span style="text-decoration: underline;">1</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Logistic          <span style="text-decoration: underline;">43</span>417.           <span style="text-decoration: underline;">54</span>758.          <span style="text-decoration: underline;">49</span>472.       0.052<span style="text-decoration: underline;">4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: range_peak_mr &lt;dbl&gt;, range_max_mr &lt;dbl&gt;</span></span></span></code></pre></div>
-<hr>
-</div>
-</div>
-<div class="section level2">
-<h2 id="part-4-comparing-across-channels">Part 4: Comparing Across Channels<a class="anchor" aria-label="anchor" href="#part-4-comparing-across-channels"></a>
-</h2>
-<p><code><a href="../reference/mrms_plot_compare.html">mrms_plot_compare()</a></code> is not limited to same-channel
-comparisons. Passing models from different channels produces a
-side-by-side view of how the portfolio’s response profiles compare —
-useful for identifying which channels are most and least saturated
-relative to current spend levels.</p>
-<p>The example below is <code>eval = FALSE</code> since it requires
-fitting all five channels; see the <em>Fitting and Analyzing Response
-Curve Models</em> vignette for the fitting loop.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># fits is the named list from the fitting vignette</span></span>
-<span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span><span class="va">fits</span>, plot_type <span class="op">=</span> <span class="st">"return"</span>, layout <span class="op">=</span> <span class="st">"facet"</span><span class="op">)</span></span></code></pre></div>
-<p>When channels operate at very different spend scales,
-<code>layout = "facet"</code> with <code>scales = "free_y"</code> (the
-default in faceted mode) ensures each panel uses an appropriate axis
-range rather than a shared one distorted by the highest-spend
-channel.</p>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="decision-framework">Decision Framework<a class="anchor" aria-label="anchor" href="#decision-framework"></a>
-</h2>
-<p>Before moving to optimization, a model should pass each of the
-following checks:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_gomp</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  Family: gaussian </span></span>
+<span><span class="co">#&gt;   Links: mu = identity </span></span>
+<span><span class="co">#&gt; Formula: conversions ~ c + (d - c) * exp(-exp(b * (spend - e))) </span></span>
+<span><span class="co">#&gt;          b ~ 1</span></span>
+<span><span class="co">#&gt;          c ~ 1</span></span>
+<span><span class="co">#&gt;          d ~ 1</span></span>
+<span><span class="co">#&gt;          e ~ 1</span></span>
+<span><span class="co">#&gt;    Data: data (Number of observations: 104) </span></span>
+<span><span class="co">#&gt;   Draws: 2 chains, each with iter = 1000; warmup = 500; thin = 1;</span></span>
+<span><span class="co">#&gt;          total post-warmup draws = 1000</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Regression Coefficients:</span></span>
+<span><span class="co">#&gt;             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
+<span><span class="co">#&gt; b_Intercept    -3.96      1.13    -6.41    -2.15 1.00      480      540</span></span>
+<span><span class="co">#&gt; c_Intercept     0.02      0.05    -0.08     0.12 1.00      418      546</span></span>
+<span><span class="co">#&gt; d_Intercept     0.92      0.10     0.81     1.15 1.00      443      596</span></span>
+<span><span class="co">#&gt; e_Intercept     0.45      0.04     0.37     0.50 1.00      307      217</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Further Distributional Parameters:</span></span>
+<span><span class="co">#&gt;       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
+<span><span class="co">#&gt; sigma     0.20      0.01     0.17     0.22 1.00      650      531</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span></span>
+<span><span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>
+<span><span class="co">#&gt; scale reduction factor on split chains (at convergence, Rhat = 1).</span></span></code></pre></div>
+<p><strong>Targets:</strong></p>
 <table class="table">
 <colgroup>
-<col width="25%">
-<col width="21%">
-<col width="53%">
+<col width="41%">
+<col width="27%">
+<col width="31%">
 </colgroup>
 <thead><tr class="header">
-<th>Check</th>
-<th>Tool</th>
-<th>Pass criterion</th>
+<th>Diagnostic</th>
+<th>Target</th>
+<th>Concern</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Chain convergence</td>
-<td>Trace plots</td>
-<td>Chains mix freely, no stuck or drifting chains</td>
+<td>Rhat</td>
+<td>≤ 1.01</td>
+<td>Values above 1.01 indicate chains haven’t converged to the same
+distribution</td>
 </tr>
 <tr class="even">
-<td>Numerical convergence</td>
-<td>R-hat</td>
-<td>All parameters Rhat ≤ 1.01</td>
+<td>Bulk ESS</td>
+<td>&gt; 400</td>
+<td>Below 400, posterior summaries (means, quantiles) may be
+unreliable</td>
 </tr>
 <tr class="odd">
-<td>Sufficient sampling</td>
-<td>ESS</td>
-<td>Bulk and Tail ESS &gt; 400 for all parameters</td>
-</tr>
-<tr class="even">
-<td>Predictive calibration</td>
-<td>PPC</td>
-<td>Replicated distributions span observed data</td>
-</tr>
-<tr class="odd">
-<td>Model fit</td>
-<td>Bayes R²</td>
-<td>R² meaningfully above baseline; CI not spanning 0</td>
-</tr>
-<tr class="even">
-<td>Curve selection</td>
-<td><code><a href="../reference/mrms_plot_compare.html">mrms_plot_compare()</a></code></td>
-<td>Chosen type fits as well as alternatives in observed range; sensible
-extrapolation</td>
+<td>Tail ESS</td>
+<td>&gt; 400</td>
+<td>Low tail ESS means credible interval endpoints are unstable</td>
 </tr>
 </tbody>
 </table>
-<p>A model that passes all six checks can be used with confidence in
-downstream analysis. A model that fails the first four (MCMC-related)
-checks should be re-fitted before its results are interpreted at all —
-the parameter estimates themselves are unreliable.</p>
+<p>If Rhat &gt; 1.01 for any parameter, do not trust the results.
+Increase <code>iter</code> and <code>warmup</code>, or adjust priors
+(see <a href="priors_and_tuning.html">Priors and Model Tuning</a>).</p>
+<hr>
 </div>
-<div class="section level2 callout-warning">
-<h2 id="a-note-on-model-selection-and-overfitting">A note on model selection and overfitting<a class="anchor" aria-label="anchor" href="#a-note-on-model-selection-and-overfitting"></a>
+</div>
+<div class="section level2">
+<h2 id="step-2-posterior-predictive-check">Step 2: Posterior predictive check<a class="anchor" aria-label="anchor" href="#step-2-posterior-predictive-check"></a>
 </h2>
-<p>Comparing multiple curve types on the same data and selecting the
-best-fitting one introduces a mild form of model selection bias. The
-selected model will tend to have higher in-sample R² than its true
-out-of-sample performance. For most practical media planning purposes
-this is acceptable — the curves are constrained by their parametric form
-and are unlikely to severely overfit 100+ observations. But it is worth
-keeping in mind when interpreting R² for a selected model.</p>
+<p>The bottom panel of <code><a href="../reference/mrm_plot_diagnostics.html">mrm_plot_diagnostics()</a></code> shows a
+<strong>posterior predictive check</strong> (PPC). This compares the
+observed data distribution to data simulated from the fitted model.</p>
+<p><strong>What to look for:</strong></p>
+<ul>
+<li>
+<strong>Good</strong>: The blue posterior draws envelope the black
+observed-data line. The overall shape and spread match.</li>
+<li>
+<strong>Bad</strong>: A systematic shift (model predicts
+higher/lower than observed), a shape mismatch (model is unimodal but
+data is bimodal), or the observed data falls outside the posterior draws
+entirely.</li>
+</ul>
+<p>A PPC failure usually means the curve form is wrong for this data,
+not that the sampler failed. Try a different curve type.</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="step-3-bayes-r²">Step 3: Bayes R²<a class="anchor" aria-label="anchor" href="#step-3-bayes-r%C2%B2"></a>
+</h2>
+<p>Bayes R² provides a posterior distribution of explained variance. It
+is reported in both <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Gompertz R²:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Gompertz R²:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit_gomp</span><span class="op">)</span></span>
+<span><span class="co">#&gt; -- Response Curve Summary: gompertz ------------------------------------------ </span></span>
+<span><span class="co">#&gt; Channel: spend</span></span>
+<span><span class="co">#&gt; Weeks: 104</span></span>
+<span><span class="co">#&gt; -- Current Performance ------------------------------------------------------- </span></span>
+<span><span class="co">#&gt; Weekly Spend: $27,082</span></span>
+<span><span class="co">#&gt; KPI: 399  |  CP: $70  |  AR: 0.0137  |  MR: 0.0341</span></span>
+<span><span class="co">#&gt; -- Parameters ---------------------------------------------------------------- </span></span>
+<span><span class="co">#&gt;   b (growth rate):     -1.03e-04</span></span>
+<span><span class="co">#&gt;   c (floor):           24</span></span>
+<span><span class="co">#&gt;   d (ceiling):         931</span></span>
+<span><span class="co">#&gt;   e (midpoint):        $25,879</span></span>
+<span><span class="co">#&gt; -- Response Curve Summary ---------------------------------------------------- </span></span>
+<span><span class="co">#&gt;   Min (peak MR):     $25,886  -&gt;  KPI: 358  |  CP: $72</span></span>
+<span><span class="co">#&gt;   Peak (peak AR):    $39,579  -&gt;  KPI: 735  |  CP: $54</span></span>
+<span><span class="co">#&gt;   Max (70% MR):      $35,502  -&gt;  KPI: 650  |  CP: $55</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; 41.3% of weeks below range | 52.9% in range | 5.8% above range</span></span>
+<span><span class="co">#&gt; -- Bayes R2 ------------------------------------------------------------------ </span></span>
+<span><span class="co">#&gt;   R2: 0.4080 (95% CI: [0.2637, 0.5146])</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Use summary(x) for brms model diagnostics.</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nLogistic R²:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Logistic R²:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit_logistic</span><span class="op">)</span></span>
+<span><span class="co">#&gt; -- Response Curve Summary: logistic ------------------------------------------ </span></span>
+<span><span class="co">#&gt; Channel: spend</span></span>
+<span><span class="co">#&gt; Weeks: 104</span></span>
+<span><span class="co">#&gt; -- Current Performance ------------------------------------------------------- </span></span>
+<span><span class="co">#&gt; Weekly Spend: $27,082</span></span>
+<span><span class="co">#&gt; KPI: 407  |  CP: $68  |  AR: 0.0142  |  MR: 0.0349</span></span>
+<span><span class="co">#&gt; -- Parameters ---------------------------------------------------------------- </span></span>
+<span><span class="co">#&gt;   b (growth rate):     -1.62e-04</span></span>
+<span><span class="co">#&gt;   c (floor):           -18</span></span>
+<span><span class="co">#&gt;   d (ceiling):         844</span></span>
+<span><span class="co">#&gt;   e (midpoint):        $27,270</span></span>
+<span><span class="co">#&gt; -- Response Curve Summary ---------------------------------------------------- </span></span>
+<span><span class="co">#&gt;   Min (peak MR):     $27,270  -&gt;  KPI: 413  |  CP: $66</span></span>
+<span><span class="co">#&gt;   Peak (peak AR):    $37,733  -&gt;  KPI: 711  |  CP: $53</span></span>
+<span><span class="co">#&gt;   Max (70% MR):      $34,963  -&gt;  KPI: 652  |  CP: $54</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; 51% of weeks below range | 42.3% in range | 6.7% above range</span></span>
+<span><span class="co">#&gt; -- Bayes R2 ------------------------------------------------------------------ </span></span>
+<span><span class="co">#&gt;   R2: 0.4219 (95% CI: [0.2897, 0.5249])</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Use summary(x) for brms model diagnostics.</span></span></code></pre></div>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li>
+<strong>R² &gt; 0.6</strong>: Well-identified curve. The response
+model explains a substantial share of the variation. Current mix of
+partners, tactics, audiences within a channel are sufficiently
+homogeneous to be modeled by one response curve.</li>
+<li>
+<strong>R² 0.4–0.6</strong>: Moderate fit. The curve captures the
+general trend but there is significant unexplained noise. Variation in
+the data may suggest the need for more nuanced modeling or
+classification of channels.</li>
+<li>
+<strong>R² &lt; 0.4</strong>: Weak fit. The curve may not be
+well-identified from this data. Consider whether the data has enough
+spend variation, or whether the relationship is genuinely noisy. The
+channel is likely composed of subchannels with distinct response
+behavior, or is reflective of large strategic shifts in media buy and
+execution.</li>
+</ul>
+<p>Bayes R² is useful for relative comparison between curve types on the
+same data, but the absolute value depends heavily on the noise level in
+the channel. A lower R² does not render the model useless, but does
+warrant a further investigation into the need for more nuanced modeling
+or classification of channels.</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="step-4-visual-comparison">Step 4: Visual comparison<a class="anchor" aria-label="anchor" href="#step-4-visual-comparison"></a>
+</h2>
+<p><code><a href="../reference/mrms_plot_compare.html">mrms_plot_compare()</a></code> overlays multiple fitted curves on a
+single axis, making shape differences immediately visible:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>gompertz <span class="op">=</span> <span class="va">fit_gomp</span>, logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span>,</span>
+<span>  interval <span class="op">=</span> <span class="st">"confidence"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="diagnostics_and_comparison_files/figure-html/compare-overlay-1.png" class="r-plt" alt="" width="672"></p>
+<p>The <code>interval</code> argument controls the uncertainty band:</p>
+<ul>
+<li>
+<code>"prediction"</code> (default): Includes observation noise —
+wider, represents where future data points might fall.</li>
+<li>
+<code>"confidence"</code>: Shows uncertainty in the mean curve only
+— narrower, better for comparing curve shapes.</li>
+<li>
+<code>"none"</code>: Just the fitted curves.</li>
+</ul>
+<div class="section level3">
+<h3 id="faceted-layout">Faceted layout<a class="anchor" aria-label="anchor" href="#faceted-layout"></a>
+</h3>
+<p>For more than two models, a faceted layout can be easier to read:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>gompertz <span class="op">=</span> <span class="va">fit_gomp</span>, logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span>,</span>
+<span>  layout <span class="op">=</span> <span class="st">"facet"</span>,</span>
+<span>  interval <span class="op">=</span> <span class="st">"prediction"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="return-curves">Return curves<a class="anchor" aria-label="anchor" href="#return-curves"></a>
+</h3>
+<p>Compare marginal and average return curves to see how the curve type
+affects efficiency estimates:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>gompertz <span class="op">=</span> <span class="va">fit_gomp</span>, logistic <span class="op">=</span> <span class="va">fit_logistic</span><span class="op">)</span>,</span>
+<span>  plot_type <span class="op">=</span> <span class="st">"return"</span>,</span>
+<span>  interval <span class="op">=</span> <span class="st">"none"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="diagnostics_and_comparison_files/figure-html/compare-return-1.png" class="r-plt" alt="" width="672"></p>
+<p>Differences in the marginal return curve between curve types directly
+affect optimization results — a model that predicts faster diminishing
+returns will recommend reallocating spend away from that channel
+sooner.</p>
+<hr>
+</div>
+</div>
+<div class="section level2">
+<h2 id="step-5-comparing-across-all-six-curve-types">Step 5: Comparing across all six curve types<a class="anchor" aria-label="anchor" href="#step-5-comparing-across-all-six-curve-types"></a>
+</h2>
+<p>For a thorough model selection, fit all six types and compare:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">curve_types</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"gompertz"</span>, <span class="st">"logistic"</span>, <span class="st">"reflected_gompertz"</span>,</span>
+<span>  <span class="st">"log_logistic"</span>, <span class="st">"weibull"</span>, <span class="st">"reflected_weibull"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">curve_types</span>, <span class="kw">function</span><span class="op">(</span><span class="va">ct</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="../reference/fit_response.html">fit_response</a></span><span class="op">(</span></span>
+<span>    data           <span class="op">=</span> <span class="va">social_data</span>,</span>
+<span>    spend          <span class="op">=</span> <span class="st">"spend"</span>,</span>
+<span>    kpi            <span class="op">=</span> <span class="st">"conversions"</span>,</span>
+<span>    date           <span class="op">=</span> <span class="st">"week"</span>,</span>
+<span>    type           <span class="op">=</span> <span class="va">ct</span>,</span>
+<span>    midpoint_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>    ceiling_max    <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    refresh        <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>    iter <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>    chains <span class="op">=</span> <span class="fl">2</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; conversions ~ c + (d - c) * exp(-exp(b * (spend - e))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span>
+<span><span class="co">#&gt; conversions ~ c + ((d - c)/(1 + exp(b * (spend - e)))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span>
+<span><span class="co">#&gt; conversions ~ c + (d - c) * (1 - exp(-exp(b * (-spend + e)))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span>
+<span><span class="co">#&gt; conversions ~ c + ((d - c)/(1 + exp(b * (log(spend) - log(e))))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span>
+<span><span class="co">#&gt; conversions ~ c + (d - c) * exp(-exp(b * (log(spend) - log(e)))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span>
+<span><span class="co">#&gt; conversions ~ c + (d - c) * (1 - exp(-exp(b * (-log(spend) + log(e))))) </span></span>
+<span><span class="co">#&gt; b ~ 1</span></span>
+<span><span class="co">#&gt; c ~ 1</span></span>
+<span><span class="co">#&gt; d ~ 1</span></span>
+<span><span class="co">#&gt; e ~ 1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fits</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">curve_types</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mrms_plot_compare.html">mrms_plot_compare</a></span><span class="op">(</span><span class="va">fits</span>, interval <span class="op">=</span> <span class="st">"confidence"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="diagnostics_and_comparison_files/figure-html/compare-all-1.png" class="r-plt" alt="" width="672"></p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="a-decision-framework">A decision framework<a class="anchor" aria-label="anchor" href="#a-decision-framework"></a>
+</h2>
+<p>Use this sequence to choose a curve type:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Eliminate non-converged models.</strong> Any model with Rhat
+&gt; 1.01 or very low ESS is unreliable and should not be compared.</li>
+<li>
+<strong>Check the PPC.</strong> Models with systematic PPC failures
+are misspecified for this data, regardless of R².</li>
+<li>
+<strong>Compare Bayes R².</strong> Among surviving models, prefer
+higher R² — but treat small differences (&lt; 0.02) as noise.</li>
+<li>
+<strong>Compare credible band width.</strong> Tighter bands mean the
+data more strongly constrains the curve. A model with slightly lower R²
+but much tighter bands may be preferable.</li>
+<li>
+<strong>Check domain plausibility.</strong> Does the ceiling
+estimate make sense? Is the midpoint in a reasonable range? A model that
+fits the data slightly better but produces implausible parameter
+estimates is less useful for optimization.</li>
+</ol>
+<p>When two models are genuinely indistinguishable, prefer the simpler
+one (Gompertz or log-logistic over reflected variants) or run the
+optimization with both and check whether the allocation decision changes
+materially.</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="diagnostic-workflow-for-a-full-portfolio">Diagnostic workflow for a full portfolio<a class="anchor" aria-label="anchor" href="#diagnostic-workflow-for-a-full-portfolio"></a>
+</h2>
+<p>When fitting multiple channels for optimization, run diagnostics on
+every channel — not just the first one. A quick check loop:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">ch_name</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fits_portfolio</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n==="</span>, <span class="va">ch_name</span>, <span class="st">"===\n"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fits_portfolio</span><span class="op">[[</span><span class="va">ch_name</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>If any channel has convergence issues, the optimization results for
+the entire portfolio are suspect — the optimizer will misallocate spend
+to/from poorly identified channels.</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="where-to-go-next">Where to go next<a class="anchor" aria-label="anchor" href="#where-to-go-next"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="41%">
+<col width="58%">
+</colgroup>
+<thead><tr class="header">
+<th>Topic</th>
+<th>Vignette</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Tuning priors when diagnostics reveal problems</td>
+<td><a href="priors_and_tuning.html">Priors &amp; Model Tuning</a></td>
+</tr>
+<tr class="even">
+<td>Budget optimization across channels</td>
+<td><a href="optimization.html">Optimization</a></td>
+</tr>
+<tr class="odd">
+<td>Hierarchical models for sub-channel structure</td>
+<td><a href="hierarchical_models.html">Hierarchical Models</a></td>
+</tr>
+</tbody>
+</table>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -554,7 +525,7 @@ keeping in mind when interpreting R² for a selected model.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

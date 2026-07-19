@@ -57,16 +57,16 @@ mrmopt_data
 #> # A tibble: 520 × 4
 #>    channel     week       spend conversions
 #>    <fct>       <date>     <dbl>       <int>
-#>  1 Paid Search 2023-01-02 46306         616
-#>  2 Paid Search 2023-01-09 38396         171
-#>  3 Paid Search 2023-01-16 41434         334
-#>  4 Paid Search 2023-01-23 46644         687
-#>  5 Paid Search 2023-01-30 37157         166
-#>  6 Paid Search 2023-02-06 47482         716
-#>  7 Paid Search 2023-02-13 32331          45
-#>  8 Paid Search 2023-02-20 28702          83
-#>  9 Paid Search 2023-02-27 47682         739
-#> 10 Paid Search 2023-03-06 48444         743
+#>  1 Paid Search 2023-01-02 46306         312
+#>  2 Paid Search 2023-01-09 38396           0
+#>  3 Paid Search 2023-01-16 41434          66
+#>  4 Paid Search 2023-01-23 46644         873
+#>  5 Paid Search 2023-01-30 37157         380
+#>  6 Paid Search 2023-02-06 47482         836
+#>  7 Paid Search 2023-02-13 32331           0
+#>  8 Paid Search 2023-02-20 28702         105
+#>  9 Paid Search 2023-02-27 47682         985
+#> 10 Paid Search 2023-03-06 48444         762
 #> # ℹ 510 more rows
 
 # Filter to a single channel

@@ -183,6 +183,25 @@
 <span><span class="co"># 5c. Period budgets (e.g., $10M annual)</span></span>
 <span><span class="va">opt_annual</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/opt_mix.html">opt_mix</a></span><span class="op">(</span><span class="va">models</span>, budget <span class="op">=</span> <span class="fl">10000000</span>, n_weeks <span class="op">=</span> <span class="fl">52</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># 5d. Flexible budget: target ROI (budget is an output)</span></span>
+<span><span class="va">opt_roi</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/opt_mix.html">opt_mix</a></span><span class="op">(</span><span class="va">models</span>, objective <span class="op">=</span> <span class="st">"target_roi"</span>, target_roi <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span></span>
+<span><span class="va">opt_roi</span><span class="op">$</span><span class="va">achieved_roi</span>       <span class="co"># actual ROI at solution</span></span>
+<span><span class="va">opt_roi</span><span class="op">$</span><span class="va">budget_info</span><span class="op">$</span><span class="va">weekly_budget</span>  <span class="co"># discovered budget</span></span>
+<span></span>
+<span><span class="co"># 5e. Flexible budget: target mROI (per-channel marginal return threshold)</span></span>
+<span><span class="va">opt_mroi</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/opt_mix.html">opt_mix</a></span><span class="op">(</span><span class="va">models</span>, objective <span class="op">=</span> <span class="st">"target_mroi"</span>, target_mroi <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="va">opt_mroi</span><span class="op">$</span><span class="va">channel_mroi</span>      <span class="co"># per-channel mROI at solution</span></span>
+<span><span class="va">opt_mroi</span><span class="op">$</span><span class="va">budget_info</span><span class="op">$</span><span class="va">weekly_budget</span>  <span class="co"># sum of per-channel solutions</span></span>
+<span></span>
+<span><span class="co"># 5f. Cost-per-KPI framing (for non-revenue KPIs like leads/visits)</span></span>
+<span><span class="co"># Same solver as target_roi, but input/output framed as cost-per</span></span>
+<span><span class="va">opt_cpk</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/opt_mix.html">opt_mix</a></span><span class="op">(</span><span class="va">models</span>, objective <span class="op">=</span> <span class="st">"target_cpk"</span>, target_cpk <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
+<span><span class="va">opt_cpk</span><span class="op">$</span><span class="va">achieved_cpk</span>       <span class="co"># actual CPK at solution (e.g. $48.50/lead)</span></span>
+<span></span>
+<span><span class="co"># 5g. Marginal cost-per-KPI (stop spending when next lead costs &gt; $100)</span></span>
+<span><span class="va">opt_mcpk</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/opt_mix.html">opt_mix</a></span><span class="op">(</span><span class="va">models</span>, objective <span class="op">=</span> <span class="st">"target_mcpk"</span>, target_mcpk <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="va">opt_mcpk</span><span class="op">$</span><span class="va">channel_mcpk</span>      <span class="co"># per-channel marginal cost-per at solution</span></span>
+<span></span>
 <span><span class="co"># 6. Visualize on response curves</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">opt</span>, type <span class="op">=</span> <span class="st">"curves"</span><span class="op">)</span>     <span class="co"># response curves with current + optimal points</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">opt</span>, type <span class="op">=</span> <span class="st">"returns"</span><span class="op">)</span>    <span class="co"># AR/MR curves with current + optimal points</span></span>
@@ -197,19 +216,37 @@
 <div class="section level3">
 <h3 id="opt_mix--main-entry-point">
 <code>opt_mix()</code> — Main Entry Point<a class="anchor" aria-label="anchor" href="#opt_mix--main-entry-point"></a></h3>
-<p>Single function with two methods: - <strong><code>method = "point"</code></strong> (default): Uses posterior median parameters → single nloptr solve (~1s) - <strong><code>method = "posterior"</code></strong>: Optimizes over N posterior draws → distribution of solutions (~6s for 200 draws × 9 channels)</p>
+<p>Single function with two methods and three objectives:</p>
+<p><strong>Methods:</strong> - <strong><code>method = "point"</code></strong> (default): Uses posterior median parameters → single nloptr solve (~1s) - <strong><code>method = "posterior"</code></strong>: Optimizes over N posterior draws → distribution of solutions (~6s for 200 draws × 9 channels)</p>
+<p><strong>Objectives:</strong> - <strong><code>objective = "max_kpi"</code></strong> (default): Maximize total KPI under a fixed budget equality constraint <code>sum(x) == budget</code>. - <strong><code>objective = "target_roi"</code></strong>: Maximize incremental KPI subject to portfolio ROI ≥ <code>target_roi</code>. Budget is free (output, not input). ROI = Σ[f(x)-f(0)] / Σx. Uses nloptr COBYLA with an inequality constraint. - <strong><code>objective = "target_mroi"</code></strong>: Per-channel root-finding — set each channel’s spend to where dy/dx = <code>target_mroi</code>. No multi-channel optimizer needed; uses grid search + <code><a href="https://rdrr.io/r/stats/uniroot.html" class="external-link">uniroot()</a></code> per channel. Budget is the sum of per-channel solutions. - <strong><code>objective = "target_cpk"</code></strong>: Cost-per-KPI wrapper around <code>target_roi</code>. Same solver, but accepts <code>target_cpk</code> (spend/KPI) instead of <code>target_roi</code> (KPI/spend). Internally converts: <code>target_roi = 1 / target_cpk</code>. Output reports CPK instead of ROI. Useful for non-revenue KPIs (leads, visits, etc.). - <strong><code>objective = "target_mcpk"</code></strong>: Marginal-cost-per-KPI wrapper around <code>target_mroi</code>. Accepts <code>target_mcpk</code> (marginal spend per KPI unit) instead of <code>target_mroi</code> (marginal KPI per dollar). Internally converts: <code>target_mroi = 1 / target_mcpk</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="internal-architecture">Internal Architecture<a class="anchor" aria-label="anchor" href="#internal-architecture"></a></h3>
 <pre><code>opt_mix()
 ├─ hlpr_auto_constraints() / hlpr_parse_constraints()  # constraint setup
-├─ opt_mix_point()          # point-estimate path
-│  ├─ mrm_response_function()  # extract median curve
-│  └─ hlpr_opt_solve()         # nloptr COBYLA
-└─ opt_mix_posterior()      # posterior path
-   ├─ hlpr_extract_draws()     # pre-extract &amp; unscale all draws (fast path)
-   ├─ make_draw_objective()    # build objective from raw draws + rm_dispatch
-   └─ hlpr_opt_solve() × N    # one solve per draw (optionally parallel)</code></pre>
+│
+├─ objective = "max_kpi"
+│  ├─ opt_mix_point()          # point-estimate path
+│  │  ├─ mrm_response_function()  # extract median curve
+│  │  └─ hlpr_opt_solve()         # nloptr COBYLA (sum(x)==budget)
+│  └─ opt_mix_posterior()      # posterior path
+│     ├─ hlpr_extract_draws()     # pre-extract &amp; unscale all draws
+│     ├─ make_draw_objective()    # build objective from raw draws + rm_dispatch
+│     └─ hlpr_opt_solve() × N    # one solve per draw
+│
+├─ objective = "target_roi"
+│  ├─ opt_mix_target_roi_point()
+│  │  ├─ hlpr_baseline_kpi()      # f(0) per channel for ROI constraint
+│  │  └─ hlpr_opt_solve()         # nloptr COBYLA (ROI inequality, no budget eq)
+│  └─ opt_mix_target_roi_posterior()
+│     ├─ hlpr_extract_draws() + hlpr_baseline_kpi_vec()
+│     └─ hlpr_opt_solve() × N
+│
+└─ objective = "target_mroi"
+   ├─ opt_mix_target_mroi_point()
+   │  └─ hlpr_find_mroi_spend() per channel  # grid + uniroot
+   └─ opt_mix_target_mroi_posterior()
+      └─ hlpr_find_mroi_spend() per channel per draw</code></pre>
 <p>The posterior path uses raw parameter draws + <code><a href="reference/rm_dispatch.html">rm_dispatch()</a></code> instead of <code><a href="https://mc-stan.org/rstantools/reference/posterior_epred.html" class="external-link">brms::posterior_epred()</a></code> — a 10,000x speedup that makes posterior optimization practical.</p>
 </div>
 <div class="section level3">
@@ -218,18 +255,28 @@
 <th>Purpose</th>
 </tr></thead><tbody><tr><td><code>R/opt_mix.R</code></td>
 <td>Main function + constraint helpers (<code>hlpr_auto_constraints</code>, <code>hlpr_parse_constraints</code>)</td>
+</tr><tr><td><code>R/opt_mix_target_roi.R</code></td>
+<td>Target ROI point + posterior solvers</td>
+</tr><tr><td><code>R/opt_mix_target_mroi.R</code></td>
+<td>Target mROI point + posterior solvers</td>
 </tr><tr><td><code>R/hlpr_opt_solve.R</code></td>
-<td>Thin nloptr wrapper (shared core for both methods)</td>
+<td>Thin nloptr wrapper (shared core)</td>
 </tr><tr><td><code>R/hlpr_extract_draws.R</code></td>
 <td>Pre-extracts &amp; unscales all posterior draws for fast evaluation</td>
+</tr><tr><td><code>R/hlpr_baseline_kpi.R</code></td>
+<td>Compute f(0) per channel (scalar + vectorised) for ROI constraint</td>
+</tr><tr><td><code>R/hlpr_numerical_mr.R</code></td>
+<td>Numerical marginal return + <code><a href="reference/hlpr_find_mroi_spend.html">hlpr_find_mroi_spend()</a></code> root-finder</td>
 </tr><tr><td><code>R/hlpr_build_solution.R</code></td>
 <td>Builds the unified solution tibble (current + optimal metrics)</td>
 </tr><tr><td><code>R/print.opt_mix_result.R</code></td>
 <td>Formatted console output</td>
 </tr><tr><td><code>R/plot.opt_mix_result.R</code></td>
 <td>6 plot types: allocation, kpi, comparison, posterior, curves, returns</td>
-</tr><tr><td><code>R/summary.opt_mix_result.R</code></td>
-<td>Returns tidy comparison tibble with deltas</td>
+</tr><tr><td><code>R/opt_summary.R</code></td>
+<td>Formatted console summary (objective-aware)</td>
+</tr><tr><td><code>R/opt_table.R</code></td>
+<td>Tidy comparison tibble with deltas</td>
 </tr><tr><td><code>R/compare.opt_mix_result.R</code></td>
 <td>
 <code>compare()</code> generic + method: side-by-side diff of two results</td>
@@ -240,7 +287,7 @@
 </tr></tbody></table></div>
 <div class="section level3">
 <h3 id="return-structure-opt_mix_result-s3-class">Return Structure (<code>opt_mix_result</code> S3 class)<a class="anchor" aria-label="anchor" href="#return-structure-opt_mix_result-s3-class"></a></h3>
-<p>Both methods return identical top-level structure: - <code>$solution</code> — unified tibble (same columns for point and posterior) - <code>$constraints</code> — tibble: channel, lb, ub, x0 - <code>$budget_info</code> — list: total_budget, weekly_budget, n_weeks, current_weekly - <code>$method</code> — <code>"point"</code> or <code>"posterior"</code> - <code>$mrms</code> — the named list of <code>mrmfit</code> models (used by <code>curves</code> and <code>returns</code> plots) - <code>$draws_matrix</code> / <code>$kpi_matrix</code> / <code>$solution_draws</code> / <code>$n_draws</code> / <code>$draw_ids</code> — posterior-only (NULL for point) - <code>$nloptr_result</code> / <code>$response_funs</code> — point-only (NULL for posterior)</p>
+<p>All objectives return the same top-level structure: - <code>$solution</code> — unified tibble (same columns for point and posterior) - <code>$constraints</code> — tibble: channel, lb, ub, x0 - <code>$budget_info</code> — list: total_budget, weekly_budget, n_weeks, current_weekly. For flexible-budget objectives, <code>weekly_budget</code> and <code>total_budget</code> are computed from the optimal solution. - <code>$method</code> — <code>"point"</code> or <code>"posterior"</code> - <code>$objective</code> — <code>"max_kpi"</code>, <code>"target_roi"</code>, or <code>"target_mroi"</code> - <code>$mrms</code> — the named list of <code>mrmfit</code> models (used by <code>curves</code> and <code>returns</code> plots) - <code>$draws_matrix</code> / <code>$kpi_matrix</code> / <code>$solution_draws</code> / <code>$n_draws</code> / <code>$draw_ids</code> — posterior-only (NULL for point) - <code>$nloptr_result</code> / <code>$response_funs</code> — point-only (NULL for posterior) - <code>$target_roi</code> / <code>$achieved_roi</code> — target_roi objective only (NULL otherwise) - <code>$target_mroi</code> / <code>$channel_mroi</code> — target_mroi objective only (NULL otherwise) - <code>$target_cpk</code> / <code>$achieved_cpk</code> — target_cpk objective only (reciprocals of ROI values; NULL otherwise) - <code>$target_mcpk</code> / <code>$channel_mcpk</code> — target_mcpk objective only (reciprocals of mROI values; NULL otherwise)</p>
 </div>
 <div class="section level3">
 <h3 id="solution-tibble-columns">Solution Tibble Columns<a class="anchor" aria-label="anchor" href="#solution-tibble-columns"></a></h3>
@@ -273,6 +320,7 @@
 <td>No</td>
 <td>Lock spend at <code>min_spend</code> (logical)</td>
 </tr></tbody></table><p>When both absolute and share bounds are present, the tighter constraint wins.</p>
+<p><strong>Note:</strong> Share-based constraints (<code>min_share</code>/<code>max_share</code>) are only supported for <code>objective = "max_kpi"</code> (fixed budget). They are warned about and stripped for flexible-budget objectives (<code>target_roi</code>, <code>target_mroi</code>) since there is no fixed budget to compute shares against.</p>
 </div>
 <div class="section level3">
 <h3 id="plot-types-plotopt_mix_result">Plot Types (<code>plot.opt_mix_result</code>)<a class="anchor" aria-label="anchor" href="#plot-types-plotopt_mix_result"></a></h3>
@@ -325,11 +373,15 @@
 </ol><hr></div>
 <div class="section level2">
 <h2 id="testing-infrastructure">Testing Infrastructure<a class="anchor" aria-label="anchor" href="#testing-infrastructure"></a></h2>
-<p><strong>25 test files</strong> in <code>tests/testthat/</code> with <strong>403+ tests</strong>. Key conventions: - <strong><code>helper-mock.R</code></strong> provides <code>make_mock_mrmfit()</code> fixture — builds lightweight mock <code>mrmfit</code> objects without MCMC, enabling fast isolated tests. Also provides <code>as_draws_df.mock_brmsfit()</code> for testing posterior draw extraction. - Tests cover: response models, helpers, scaling, fitting (input validation), plotting, palette, parameters, optimization (build_solution, extract_draws, constraints, opt_mix validation) - Run with <code>devtools::test()</code></p>
+<p><strong>30 test files</strong> in <code>tests/testthat/</code> with <strong>714+ tests</strong>. Key conventions: - <strong><code>helper-mock.R</code></strong> provides <code>make_mock_mrmfit()</code> fixture — builds lightweight mock <code>mrmfit</code> objects without MCMC, enabling fast isolated tests. Also provides <code>as_draws_df.mock_brmsfit()</code> for testing posterior draw extraction. - Tests cover: response models, helpers, scaling, fitting (input validation), plotting, palette, parameters, optimization (build_solution, extract_draws, constraints, opt_mix validation) - Run with <code>devtools::test()</code></p>
 <hr></div>
 <div class="section level2">
 <h2 id="key-recent-changes-from-prior-sessions">Key Recent Changes (from prior sessions)<a class="anchor" aria-label="anchor" href="#key-recent-changes-from-prior-sessions"></a></h2>
 <ul><li>
+<strong>Cost-per-KPI objectives</strong>: Added <code>objective = "target_cpk"</code> and <code>objective = "target_mcpk"</code> — convenience wrappers around <code>target_roi</code>/<code>target_mroi</code> that accept and report cost-per-KPI instead of ROI. Internally converts: <code>target_roi = 1/target_cpk</code>, <code>target_mroi = 1/target_mcpk</code>. Return gains <code>$target_cpk</code>/<code>$achieved_cpk</code>, <code>$target_mcpk</code>/<code>$channel_mcpk</code>. <code>opt_summary.R</code> displays CPK/mCPK framing. Useful for non-revenue KPIs (leads, visits, opportunities).</li>
+<li>
+<strong>Flexible-budget optimisation objectives</strong>: Added <code>objective = "target_roi"</code> and <code>objective = "target_mroi"</code> to <code><a href="reference/opt_mix.html">opt_mix()</a></code>. Target ROI maximises incremental KPI subject to portfolio ROI ≥ target (budget is an output). Target mROI sets each channel’s spend where dy/dx = target (per-channel root-finding, no multi-channel solver). Both support <code>method = "point"</code> and <code>method = "posterior"</code>. New files: <code>R/opt_mix_target_roi.R</code>, <code>R/opt_mix_target_mroi.R</code>, <code>R/hlpr_baseline_kpi.R</code>, <code>R/hlpr_numerical_mr.R</code>. Return structure gains <code>$objective</code>, <code>$target_roi</code>/<code>$achieved_roi</code>, <code>$target_mroi</code>/<code>$channel_mroi</code>. <code>opt_summary.R</code> and <code>opt_table.R</code> are objective-aware. Mock fixture (<code>helper-mock.R</code>) now includes <code>params_hier_unit</code> for <code>hlpr_params()</code> compatibility.</li>
+<li>
 <strong>opt_mix API redesign</strong>: <code>summary.opt_mix_result()</code> now produces the formatted console output (previously done by <code>print</code>). <code><a href="reference/print.opt_mix_result.html">print.opt_mix_result()</a></code> is a thin wrapper calling <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>. <code><a href="reference/opt_table.html">opt_table()</a></code> is a new plain exported function that returns the tidy comparison tibble (previously returned by <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>). All internal <code>plot_opt_*</code> helpers are now standalone exported functions named <code><a href="reference/opt_plot_allocation.html">opt_plot_allocation()</a></code>, <code><a href="reference/opt_plot_comparison.html">opt_plot_comparison()</a></code>, <code><a href="reference/opt_plot_posterior.html">opt_plot_posterior()</a></code>, <code><a href="reference/opt_plot_curves.html">opt_plot_curves()</a></code>, <code><a href="reference/opt_plot_returns.html">opt_plot_returns()</a></code>, and <code>opt_plot_compare()</code>. <code><a href="reference/plot.opt_mix_result.html">plot.opt_mix_result()</a></code> and <code>plot.opt_mix_compare()</code> are thin dispatchers calling the <code>opt_plot_*</code> functions. <code><a href="reference/opt_plot_posterior.html">opt_plot_posterior()</a></code> now hard-errors (instead of message + fallback) when called on a point result.</li>
 <li>
 <strong><code>compare()</code> function</strong>: S3 generic + method for side-by-side diff of two <code>opt_mix_result</code> objects with <code>plot.opt_mix_compare</code> dumbbell chart.</li>
@@ -368,7 +420,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

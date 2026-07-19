@@ -653,5 +653,9 @@ structure. The key distinctions are:
 
 Fitting begins with
 [`fit_response()`](https://bdshaff.github.io/mrmopt/reference/fit_response.md).
-The next vignette covers the full fitting and analysis workflow using a
-realistic simulated dataset.
+See [Getting
+Started](https://bdshaff.github.io/mrmopt/articles/getting_started.md)
+for the full workflow, and [Priors & Model
+Tuning](https://bdshaff.github.io/mrmopt/articles/priors_and_tuning.md)
+for guidance on how these mathematical properties inform prior
+specification.

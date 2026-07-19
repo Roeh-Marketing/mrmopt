@@ -56,6 +56,8 @@
   : Per-unit, per-level, and channel summary from a hierarchical fit
 - [`mrmopt_data`](https://bdshaff.github.io/mrmopt/reference/mrmopt_data.md)
   : Simulated multi-channel media spend dataset
+- [`mrmopt_hier_data`](https://bdshaff.github.io/mrmopt/reference/mrmopt_hier_data.md)
+  : Simulated hierarchical TV sub-channel dataset
 - [`mrmopt_palette()`](https://bdshaff.github.io/mrmopt/reference/mrmopt_palette.md)
   : Package-level color palette for mrmopt plots
 - [`mrmopt_prior()`](https://bdshaff.github.io/mrmopt/reference/mrmopt_prior.md)

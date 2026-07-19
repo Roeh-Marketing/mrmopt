@@ -133,16 +133,16 @@ conversions.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 520 × 4</span></span></span>
 <span><span class="co">#&gt;    channel     week       spend conversions</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Paid Search 2023-01-02 <span style="text-decoration: underline;">46</span>306         616</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Paid Search 2023-01-09 <span style="text-decoration: underline;">38</span>396         171</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Paid Search 2023-01-16 <span style="text-decoration: underline;">41</span>434         334</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Paid Search 2023-01-23 <span style="text-decoration: underline;">46</span>644         687</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Paid Search 2023-01-30 <span style="text-decoration: underline;">37</span>157         166</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Paid Search 2023-02-06 <span style="text-decoration: underline;">47</span>482         716</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Paid Search 2023-02-13 <span style="text-decoration: underline;">32</span>331          45</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Paid Search 2023-02-20 <span style="text-decoration: underline;">28</span>702          83</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Paid Search 2023-02-27 <span style="text-decoration: underline;">47</span>682         739</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Paid Search 2023-03-06 <span style="text-decoration: underline;">48</span>444         743</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Paid Search 2023-01-02 <span style="text-decoration: underline;">46</span>306         312</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Paid Search 2023-01-09 <span style="text-decoration: underline;">38</span>396           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Paid Search 2023-01-16 <span style="text-decoration: underline;">41</span>434          66</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Paid Search 2023-01-23 <span style="text-decoration: underline;">46</span>644         873</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Paid Search 2023-01-30 <span style="text-decoration: underline;">37</span>157         380</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Paid Search 2023-02-06 <span style="text-decoration: underline;">47</span>482         836</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Paid Search 2023-02-13 <span style="text-decoration: underline;">32</span>331           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Paid Search 2023-02-20 <span style="text-decoration: underline;">28</span>702         105</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Paid Search 2023-02-27 <span style="text-decoration: underline;">47</span>682         985</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Paid Search 2023-03-06 <span style="text-decoration: underline;">48</span>444         762</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 510 more rows</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mrmopt_data</span> <span class="op">|&gt;</span></span>
@@ -157,11 +157,11 @@ conversions.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
 <span><span class="co">#&gt;   channel      weeks total_spend total_conv avg_wk_spend avg_wk_conv</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Paid Search    104     4<span style="text-decoration: underline;">721</span>083      <span style="text-decoration: underline;">57</span>188       <span style="text-decoration: underline;">45</span>395.        550.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Paid Social    104     2<span style="text-decoration: underline;">816</span>528      <span style="text-decoration: underline;">38</span>719       <span style="text-decoration: underline;">27</span>082         372.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Display        104     1<span style="text-decoration: underline;">828</span>456      <span style="text-decoration: underline;">20</span>339       <span style="text-decoration: underline;">17</span>581.        196.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Online Video   104     3<span style="text-decoration: underline;">518</span>235      <span style="text-decoration: underline;">45</span>789       <span style="text-decoration: underline;">33</span>829.        440.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> TV             104     8<span style="text-decoration: underline;">398</span>316     <span style="text-decoration: underline;">107</span>985       <span style="text-decoration: underline;">80</span>753.       <span style="text-decoration: underline;">1</span>038.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Paid Search    104     4<span style="text-decoration: underline;">721</span>083      <span style="text-decoration: underline;">57</span>506       <span style="text-decoration: underline;">45</span>395.        553.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Paid Social    104     2<span style="text-decoration: underline;">816</span>528      <span style="text-decoration: underline;">41</span>243       <span style="text-decoration: underline;">27</span>082         397.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Display        104     1<span style="text-decoration: underline;">828</span>456      <span style="text-decoration: underline;">21</span>305       <span style="text-decoration: underline;">17</span>581.        205.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Online Video   104     3<span style="text-decoration: underline;">518</span>235      <span style="text-decoration: underline;">49</span>914       <span style="text-decoration: underline;">33</span>829.        480.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> TV             104     8<span style="text-decoration: underline;">398</span>316     <span style="text-decoration: underline;">112</span>664       <span style="text-decoration: underline;">80</span>753.       <span style="text-decoration: underline;">1</span>083.</span></span></code></pre></div>
 <p><strong>Required format:</strong> One row per channel-week. At
 minimum you need <code>date</code>, <code>spend</code>, and
 <code>kpi</code> columns. An optional <code>units</code> column
@@ -214,20 +214,20 @@ model:</p>
 <span><span class="co">#&gt; Weeks: 104</span></span>
 <span><span class="co">#&gt; -- Current Performance ------------------------------------------------------- </span></span>
 <span><span class="co">#&gt; Weekly Spend: $45,395</span></span>
-<span><span class="co">#&gt; KPI: 605  |  CP: $77  |  AR: 0.0117  |  MR: 0.0539</span></span>
+<span><span class="co">#&gt; KPI: 598  |  CP: $76  |  AR: 0.0128  |  MR: 0.0534</span></span>
 <span><span class="co">#&gt; -- Parameters ---------------------------------------------------------------- </span></span>
-<span><span class="co">#&gt;   b (growth rate):     -2.03e-04</span></span>
-<span><span class="co">#&gt;   c (floor):           74</span></span>
-<span><span class="co">#&gt;   d (ceiling):         948</span></span>
-<span><span class="co">#&gt;   e (midpoint):        $41,967</span></span>
+<span><span class="co">#&gt;   b (growth rate):     -1.54e-04</span></span>
+<span><span class="co">#&gt;   c (floor):           19</span></span>
+<span><span class="co">#&gt;   d (ceiling):         1,070</span></span>
+<span><span class="co">#&gt;   e (midpoint):        $42,034</span></span>
 <span><span class="co">#&gt; -- Response Curve Summary ---------------------------------------------------- </span></span>
-<span><span class="co">#&gt;   Min (peak MR):     $41,976  -&gt;  KPI: 397  |  CP: $106</span></span>
-<span><span class="co">#&gt;   Peak (peak AR):    $53,797  -&gt;  KPI: 872  |  CP: $62</span></span>
-<span><span class="co">#&gt;   Max (70% MR):      $46,877  -&gt;  KPI: 678  |  CP: $69</span></span>
+<span><span class="co">#&gt;   Min (peak MR):     $42,072  -&gt;  KPI: 408  |  CP: $103</span></span>
+<span><span class="co">#&gt;   Peak (peak AR):    $56,007  -&gt;  KPI: 955  |  CP: $59</span></span>
+<span><span class="co">#&gt;   Max (70% MR):      $48,511  -&gt;  KPI: 746  |  CP: $65</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 33.7% of weeks below range | 22.1% in range | 44.2% above range</span></span>
+<span><span class="co">#&gt; 33.7% of weeks below range | 34.6% in range | 31.7% above range</span></span>
 <span><span class="co">#&gt; -- Bayes R2 ------------------------------------------------------------------ </span></span>
-<span><span class="co">#&gt;   R2: 0.9930 (95% CI: [0.9925, 0.9932])</span></span>
+<span><span class="co">#&gt;   R2: 0.6320 (95% CI: [0.5469, 0.6798])</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Use summary(x) for brms model diagnostics.</span></span></code></pre></div>
 <p>Reading this top to bottom:</p>
@@ -260,10 +260,10 @@ parameters:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 6</span></span></span>
 <span><span class="co">#&gt;   param name        description                         center    lower    upper</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> b     Growth Rate Controls how quickly the curve r… -<span style="color: #BB0000;">2.03</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span> -<span style="color: #BB0000;">2.08</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span> -<span style="color: #BB0000;">1.93</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> c     Floor       Baseline KPI level at zero spend…  7.45<span style="color: #949494;">e</span>+1  6.15<span style="color: #949494;">e</span>+1  8.73<span style="color: #949494;">e</span>+1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> d     Ceiling     Maximum achievable KPI at satura…  9.48<span style="color: #949494;">e</span>+2  9.36<span style="color: #949494;">e</span>+2  9.63<span style="color: #949494;">e</span>+2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> e     Midpoint    Spend level at the inflection po…  4.20<span style="color: #949494;">e</span>+4  4.18<span style="color: #949494;">e</span>+4  4.22<span style="color: #949494;">e</span>+4</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> b     Growth Rate Controls how quickly the curve r… -<span style="color: #BB0000;">1.54</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span> -<span style="color: #BB0000;">2.01</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span> -<span style="color: #BB0000;">1.04</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> c     Floor       Baseline KPI level at zero spend…  1.87<span style="color: #949494;">e</span>+1 -<span style="color: #BB0000;">7.62</span><span style="color: #949494;">e</span>+1  1.06<span style="color: #949494;">e</span>+2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> d     Ceiling     Maximum achievable KPI at satura…  1.07<span style="color: #949494;">e</span>+3  1.02<span style="color: #949494;">e</span>+3  1.20<span style="color: #949494;">e</span>+3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> e     Midpoint    Spend level at the inflection po…  4.20<span style="color: #949494;">e</span>+4  4.02<span style="color: #949494;">e</span>+4  4.33<span style="color: #949494;">e</span>+4</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -302,14 +302,14 @@ printed in <code><a href="../reference/mrm_summary.html">mrm_summary()</a></code
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Regression Coefficients:</span></span>
 <span><span class="co">#&gt;             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; b_Intercept    -9.73      0.20    -9.99    -9.24 1.00      346      336</span></span>
-<span><span class="co">#&gt; c_Intercept     0.03      0.01     0.02     0.05 1.00      399      525</span></span>
-<span><span class="co">#&gt; d_Intercept     0.99      0.01     0.97     1.00 1.00      452      562</span></span>
-<span><span class="co">#&gt; e_Intercept     0.47      0.00     0.46     0.47 1.00      449      385</span></span>
+<span><span class="co">#&gt; b_Intercept    -7.41      1.22    -9.64    -5.01 1.00      401      410</span></span>
+<span><span class="co">#&gt; c_Intercept     0.01      0.04    -0.06     0.08 1.01      485      530</span></span>
+<span><span class="co">#&gt; d_Intercept     0.84      0.04     0.80     0.94 1.00      459      490</span></span>
+<span><span class="co">#&gt; e_Intercept     0.47      0.02     0.43     0.50 1.01      398      313</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Further Distributional Parameters:</span></span>
 <span><span class="co">#&gt;       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; sigma     0.03      0.00     0.02     0.03 1.00      732      722</span></span>
+<span><span class="co">#&gt; sigma     0.19      0.01     0.16     0.22 1.00      746      650</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span></span>
 <span><span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>
@@ -461,10 +461,11 @@ runs in under a second:</p>
 <span><span class="co">#&gt; Optimization setup:</span></span>
 <span><span class="co">#&gt;   Channels:       5 </span></span>
 <span><span class="co">#&gt;   Method:         point </span></span>
+<span><span class="co">#&gt;   Objective:      max_kpi </span></span>
 <span><span class="co">#&gt;   Weekly budget:  204,641 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Optimization converged (status: 4 )</span></span>
-<span><span class="co">#&gt; Total weekly KPI: 2,936</span></span></code></pre></div>
+<span><span class="co">#&gt; Total weekly KPI: 3,119</span></span></code></pre></div>
 <p><code><a href="../reference/opt_summary.html">opt_summary()</a></code> prints a formatted allocation table:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/opt_summary.html">opt_summary</a></span><span class="op">(</span><span class="va">opt</span><span class="op">)</span></span>
@@ -472,15 +473,15 @@ runs in under a second:</p>
 <span><span class="co">#&gt; Budget: $204,641/week  |  Channels: 5</span></span>
 <span><span class="co">#&gt; -- Optimal Allocation -------------------------------------------------------- </span></span>
 <span><span class="co">#&gt;   Channel           Weekly Spend    Weekly KPI          CP    Share </span></span>
-<span><span class="co">#&gt;   Paid Social            $31,196           529         $59   15.2%</span></span>
-<span><span class="co">#&gt;   Paid Search            $51,532           825         $62   25.2%</span></span>
-<span><span class="co">#&gt;   Online Video           $38,130           595         $64   18.6%</span></span>
-<span><span class="co">#&gt;   Display                $19,517           288         $68    9.5%</span></span>
-<span><span class="co">#&gt;   TV                     $64,267           699         $92   31.4%</span></span>
+<span><span class="co">#&gt;   Paid Social            $36,044           665         $54   17.6%</span></span>
+<span><span class="co">#&gt;   Paid Search            $52,711           882         $60   25.8%</span></span>
+<span><span class="co">#&gt;   Display                $22,466           348         $65   11.0%</span></span>
+<span><span class="co">#&gt;   TV                     $83,921         1,180         $71   41.0%</span></span>
+<span><span class="co">#&gt;   Online Video            $9,498            44        $218    4.6%</span></span>
 <span><span class="co">#&gt; -- Totals -------------------------------------------------------------------- </span></span>
-<span><span class="co">#&gt;   Optimal:  Spend $204,641  |  KPI 2,936  |  Avg CP $70</span></span>
-<span><span class="co">#&gt;   Current:  Spend $204,641  |  KPI 2,754  |  Avg CP $74</span></span>
-<span><span class="co">#&gt;   Change:   KPI +6.6%  |  CP $5</span></span></code></pre></div>
+<span><span class="co">#&gt;   Optimal:  Spend $204,641  |  KPI 3,119  |  Avg CP $66</span></span>
+<span><span class="co">#&gt;   Current:  Spend $204,641  |  KPI 2,850  |  Avg CP $72</span></span>
+<span><span class="co">#&gt;   Change:   KPI +9.4%  |  CP $6</span></span></code></pre></div>
 <p>Reading the output:</p>
 <ul>
 <li>
@@ -506,12 +507,12 @@ tibble for further analysis or reporting:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 8</span></span></span>
 <span><span class="co">#&gt;   channel    current_spend optimal_spend spend_delta_pct current_kpi optimal_kpi</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Paid Soci…        <span style="text-decoration: underline;">27</span>082         <span style="text-decoration: underline;">31</span>196.      0.152             390.        529.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Paid Sear…        <span style="text-decoration: underline;">45</span>395.        <span style="text-decoration: underline;">51</span>532.      0.135             595.        825.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Online Vi…        <span style="text-decoration: underline;">33</span>829.        <span style="text-decoration: underline;">38</span>130.      0.127             471.        595.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Display           <span style="text-decoration: underline;">17</span>581.        <span style="text-decoration: underline;">19</span>517.      0.110             220.        288.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> TV                <span style="text-decoration: underline;">80</span>753.        <span style="text-decoration: underline;">64</span>267.     -<span style="color: #BB0000;">0.204</span>            <span style="text-decoration: underline;">1</span>079.        699.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> TOTAL            <span style="text-decoration: underline;">204</span>641.       <span style="text-decoration: underline;">204</span>641       0.000<span style="text-decoration: underline;">002</span>16       <span style="text-decoration: underline;">2</span>754.       <span style="text-decoration: underline;">2</span>936.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Paid Soci…        <span style="text-decoration: underline;">27</span>082         <span style="text-decoration: underline;">36</span>044.      0.331             400.       665. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Paid Sear…        <span style="text-decoration: underline;">45</span>395.        <span style="text-decoration: underline;">52</span>711.      0.161             622.       882. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Display           <span style="text-decoration: underline;">17</span>581.        <span style="text-decoration: underline;">22</span>466.      0.278             216.       348. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> TV                <span style="text-decoration: underline;">80</span>753.        <span style="text-decoration: underline;">83</span>921.      0.039<span style="text-decoration: underline;">2</span>           <span style="text-decoration: underline;">1</span>108.      <span style="text-decoration: underline;">1</span>180. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Online Vi…        <span style="text-decoration: underline;">33</span>829.         <span style="text-decoration: underline;">9</span>498.     -<span style="color: #BB0000;">0.719</span>             504.        43.6</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> TOTAL            <span style="text-decoration: underline;">204</span>641.       <span style="text-decoration: underline;">204</span>641       0.000<span style="text-decoration: underline;">002</span>16       <span style="text-decoration: underline;">2</span>850.      <span style="text-decoration: underline;">3</span>119. </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: kpi_delta_pct &lt;dbl&gt;, cp_delta &lt;dbl&gt;</span></span></span></code></pre></div>
 <hr>
 </div>
@@ -550,28 +551,29 @@ posterior draws, producing a distribution of optimal allocations:</p>
 <span><span class="co">#&gt; Optimization setup:</span></span>
 <span><span class="co">#&gt;   Channels:       5 </span></span>
 <span><span class="co">#&gt;   Method:         posterior </span></span>
+<span><span class="co">#&gt;   Objective:      max_kpi </span></span>
 <span><span class="co">#&gt;   Weekly budget:  204,641 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Optimizing across 200 posterior draws...</span></span>
 <span><span class="co">#&gt;   |                                                                              |                                                                      |   0%  |                                                                              |=                                                                     |   1%  |                                                                              |=                                                                     |   2%  |                                                                              |==                                                                    |   2%  |                                                                              |==                                                                    |   3%  |                                                                              |==                                                                    |   4%  |                                                                              |===                                                                   |   4%  |                                                                              |====                                                                  |   5%  |                                                                              |====                                                                  |   6%  |                                                                              |=====                                                                 |   6%  |                                                                              |=====                                                                 |   7%  |                                                                              |=====                                                                 |   8%  |                                                                              |======                                                                |   8%  |                                                                              |======                                                                |   9%  |                                                                              |=======                                                               |  10%  |                                                                              |========                                                              |  11%  |                                                                              |========                                                              |  12%  |                                                                              |=========                                                             |  12%  |                                                                              |=========                                                             |  13%  |                                                                              |=========                                                             |  14%  |                                                                              |==========                                                            |  14%  |                                                                              |==========                                                            |  15%  |                                                                              |===========                                                           |  16%  |                                                                              |============                                                          |  16%  |                                                                              |============                                                          |  17%  |                                                                              |============                                                          |  18%  |                                                                              |=============                                                         |  18%  |                                                                              |=============                                                         |  19%  |                                                                              |==============                                                        |  20%  |                                                                              |===============                                                       |  21%  |                                                                              |===============                                                       |  22%  |                                                                              |================                                                      |  22%  |                                                                              |================                                                      |  23%  |                                                                              |================                                                      |  24%  |                                                                              |=================                                                     |  24%  |                                                                              |==================                                                    |  25%  |                                                                              |==================                                                    |  26%  |                                                                              |===================                                                   |  26%  |                                                                              |===================                                                   |  27%  |                                                                              |===================                                                   |  28%  |                                                                              |====================                                                  |  28%  |                                                                              |====================                                                  |  29%  |                                                                              |=====================                                                 |  30%  |                                                                              |======================                                                |  31%  |                                                                              |======================                                                |  32%  |                                                                              |=======================                                               |  32%  |                                                                              |=======================                                               |  33%  |                                                                              |=======================                                               |  34%  |                                                                              |========================                                              |  34%  |                                                                              |========================                                              |  35%  |                                                                              |=========================                                             |  36%  |                                                                              |==========================                                            |  36%  |                                                                              |==========================                                            |  37%  |                                                                              |==========================                                            |  38%  |                                                                              |===========================                                           |  38%  |                                                                              |===========================                                           |  39%  |                                                                              |============================                                          |  40%  |                                                                              |=============================                                         |  41%  |                                                                              |=============================                                         |  42%  |                                                                              |==============================                                        |  42%  |                                                                              |==============================                                        |  43%  |                                                                              |==============================                                        |  44%  |                                                                              |===============================                                       |  44%  |                                                                              |================================                                      |  45%  |                                                                              |================================                                      |  46%  |                                                                              |=================================                                     |  46%  |                                                                              |=================================                                     |  47%  |                                                                              |=================================                                     |  48%  |                                                                              |==================================                                    |  48%  |                                                                              |==================================                                    |  49%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================                                  |  51%  |                                                                              |====================================                                  |  52%  |                                                                              |=====================================                                 |  52%  |                                                                              |=====================================                                 |  53%  |                                                                              |=====================================                                 |  54%  |                                                                              |======================================                                |  54%  |                                                                              |======================================                                |  55%  |                                                                              |=======================================                               |  56%  |                                                                              |========================================                              |  56%  |                                                                              |========================================                              |  57%  |                                                                              |========================================                              |  58%  |                                                                              |=========================================                             |  58%  |                                                                              |=========================================                             |  59%  |                                                                              |==========================================                            |  60%  |                                                                              |===========================================                           |  61%  |                                                                              |===========================================                           |  62%  |                                                                              |============================================                          |  62%  |                                                                              |============================================                          |  63%  |                                                                              |============================================                          |  64%  |                                                                              |=============================================                         |  64%  |                                                                              |==============================================                        |  65%  |                                                                              |==============================================                        |  66%  |                                                                              |===============================================                       |  66%  |                                                                              |===============================================                       |  67%  |                                                                              |===============================================                       |  68%  |                                                                              |================================================                      |  68%  |                                                                              |================================================                      |  69%  |                                                                              |=================================================                     |  70%  |                                                                              |==================================================                    |  71%  |                                                                              |==================================================                    |  72%  |                                                                              |===================================================                   |  72%  |                                                                              |===================================================                   |  73%  |                                                                              |===================================================                   |  74%  |                                                                              |====================================================                  |  74%  |                                                                              |====================================================                  |  75%  |                                                                              |=====================================================                 |  76%  |                                                                              |======================================================                |  76%  |                                                                              |======================================================                |  77%  |                                                                              |======================================================                |  78%  |                                                                              |=======================================================               |  78%  |                                                                              |=======================================================               |  79%  |                                                                              |========================================================              |  80%  |                                                                              |=========================================================             |  81%  |                                                                              |=========================================================             |  82%  |                                                                              |==========================================================            |  82%  |                                                                              |==========================================================            |  83%  |                                                                              |==========================================================            |  84%  |                                                                              |===========================================================           |  84%  |                                                                              |============================================================          |  85%  |                                                                              |============================================================          |  86%  |                                                                              |=============================================================         |  86%  |                                                                              |=============================================================         |  87%  |                                                                              |=============================================================         |  88%  |                                                                              |==============================================================        |  88%  |                                                                              |==============================================================        |  89%  |                                                                              |===============================================================       |  90%  |                                                                              |================================================================      |  91%  |                                                                              |================================================================      |  92%  |                                                                              |=================================================================     |  92%  |                                                                              |=================================================================     |  93%  |                                                                              |=================================================================     |  94%  |                                                                              |==================================================================    |  94%  |                                                                              |==================================================================    |  95%  |                                                                              |===================================================================   |  96%  |                                                                              |====================================================================  |  96%  |                                                                              |====================================================================  |  97%  |                                                                              |====================================================================  |  98%  |                                                                              |===================================================================== |  98%  |                                                                              |===================================================================== |  99%  |                                                                              |======================================================================| 100%</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Posterior optimization complete.</span></span>
-<span><span class="co">#&gt; Median total weekly KPI: 2,936</span></span></code></pre></div>
+<span><span class="co">#&gt; Median total weekly KPI: 3,241</span></span></code></pre></div>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/opt_summary.html">opt_summary</a></span><span class="op">(</span><span class="va">opt_post</span><span class="op">)</span></span>
 <span><span class="co">#&gt; -- Optimization Result (posterior, 200 draws) -------------------------------- </span></span>
 <span><span class="co">#&gt; Budget: $204,641/week  |  Channels: 5</span></span>
 <span><span class="co">#&gt; -- Optimal Allocation -------------------------------------------------------- </span></span>
 <span><span class="co">#&gt;   Channel           Weekly Spend                  [95% CI]          CP    Share </span></span>
-<span><span class="co">#&gt;   Paid Social            $31,211     [$30,757 – $31,803]         $59  +15.2%</span></span>
-<span><span class="co">#&gt;   Paid Search            $51,581     [$51,182 – $52,012]         $62  +25.2%</span></span>
-<span><span class="co">#&gt;   Online Video           $38,161     [$37,470 – $39,032]         $64  +18.6%</span></span>
-<span><span class="co">#&gt;   Display                $19,540     [$19,252 – $19,824]         $68   +9.5%</span></span>
-<span><span class="co">#&gt;   TV                     $64,193     [$62,235 – $65,661]         $92  +31.4%</span></span>
+<span><span class="co">#&gt;   Paid Social            $36,762     [$22,307 – $47,044]         $53  +17.9%</span></span>
+<span><span class="co">#&gt;   Paid Search            $53,393     [$51,282 – $58,067]         $59    +26%</span></span>
+<span><span class="co">#&gt;   Display                $23,346      [$5,495 – $28,865]         $61  +11.4%</span></span>
+<span><span class="co">#&gt;   Online Video            $9,498      [$9,498 – $55,649]         $70   +4.6%</span></span>
+<span><span class="co">#&gt;   TV                     $82,275    [$24,070 – $100,613]         $73  +40.1%</span></span>
 <span><span class="co">#&gt; -- Totals -------------------------------------------------------------------- </span></span>
-<span><span class="co">#&gt;   Optimal:  Spend $204,686  |  KPI 2,936  |  Avg CP $70</span></span>
-<span><span class="co">#&gt;   Current:  Spend $204,641  |  KPI 2,754  |  Avg CP $74</span></span>
-<span><span class="co">#&gt;   Change:   KPI +6.6%  |  CP $5</span></span></code></pre></div>
+<span><span class="co">#&gt;   Optimal:  Spend $205,274  |  KPI 3,241  |  Avg CP $63</span></span>
+<span><span class="co">#&gt;   Current:  Spend $204,641  |  KPI 2,850  |  Avg CP $72</span></span>
+<span><span class="co">#&gt;   Change:   KPI +13.7%  |  CP $8</span></span></code></pre></div>
 <p>The <code>[95% CI]</code> column shows the range of optimal spend
 across draws. <code><a href="../reference/opt_plot_allocation.html">opt_plot_allocation()</a></code> adds error bars:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
@@ -600,12 +602,13 @@ budget broken into weekly allocations:</p>
 <span><span class="co">#&gt; Optimization setup:</span></span>
 <span><span class="co">#&gt;   Channels:       5 </span></span>
 <span><span class="co">#&gt;   Method:         point </span></span>
+<span><span class="co">#&gt;   Objective:      max_kpi </span></span>
 <span><span class="co">#&gt;   Weekly budget:  5e+05 </span></span>
 <span><span class="co">#&gt;   Period budget:  2.6e+07  ( 52  weeks)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Optimization converged (status: 4 )</span></span>
-<span><span class="co">#&gt; Total weekly KPI: 4,593 </span></span>
-<span><span class="co">#&gt; Total period KPI: 238,852</span></span></code></pre></div>
+<span><span class="co">#&gt; Total weekly KPI: 6,032 </span></span>
+<span><span class="co">#&gt; Total period KPI: 313,645</span></span></code></pre></div>
 <p><strong>Custom constraints</strong> — set channel-level floors,
 ceilings, and share bounds:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
@@ -620,10 +623,11 @@ ceilings, and share bounds:</p>
 <span><span class="co">#&gt; Optimization setup:</span></span>
 <span><span class="co">#&gt;   Channels:       5 </span></span>
 <span><span class="co">#&gt;   Method:         point </span></span>
+<span><span class="co">#&gt;   Objective:      max_kpi </span></span>
 <span><span class="co">#&gt;   Weekly budget:  204,641 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Optimization converged (status: 4 )</span></span>
-<span><span class="co">#&gt; Total weekly KPI: 2,936</span></span></code></pre></div>
+<span><span class="co">#&gt; Total weekly KPI: 3,043</span></span></code></pre></div>
 <p>See the <a href="optimization.html">Optimization</a> vignette for the
 full constraint specification including share bounds and fixed
 channels.</p>
@@ -641,10 +645,29 @@ channels.</p>
 <th>Topic</th>
 <th>Vignette</th>
 </tr></thead>
-<tbody><tr class="odd">
+<tbody>
+<tr class="odd">
+<td>How priors work and when to adjust them</td>
+<td><a href="priors_and_tuning.html">Priors &amp; Model Tuning</a></td>
+</tr>
+<tr class="even">
+<td>Convergence checks and model selection</td>
+<td><a href="diagnostics_and_comparison.html">Diagnostics &amp; Model
+Comparison</a></td>
+</tr>
+<tr class="odd">
+<td>All optimization objectives, constraints, and methods</td>
+<td><a href="optimization.html">Optimization</a></td>
+</tr>
+<tr class="even">
+<td>Sub-channel hierarchical models</td>
+<td><a href="hierarchical_models.html">Hierarchical Models</a></td>
+</tr>
+<tr class="odd">
 <td>Mathematical derivations of all six curve forms</td>
 <td><a href="response_curve_theory.html">Response Curve Theory</a></td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -658,7 +681,7 @@ channels.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
