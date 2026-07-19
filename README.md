@@ -11,8 +11,8 @@ modeling experience, while remaining flexible enough for rigorous applied work.
 ## Installation
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("bdshaff/mrmopt")
+# install.packages("pak")
+pak::pak("bdshaff/mrmopt")
 ```
 
 ## Workflow

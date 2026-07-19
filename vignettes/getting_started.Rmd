@@ -420,4 +420,8 @@ specification including share bounds and fixed channels.
 
 | Topic | Vignette |
 |-------|----------|
+| How priors work and when to adjust them | [Priors & Model Tuning](priors_and_tuning.html) |
+| Convergence checks and model selection | [Diagnostics & Model Comparison](diagnostics_and_comparison.html) |
+| All optimization objectives, constraints, and methods | [Optimization](optimization.html) |
+| Sub-channel hierarchical models | [Hierarchical Models](hierarchical_models.html) |
 | Mathematical derivations of all six curve forms | [Response Curve Theory](response_curve_theory.html) |

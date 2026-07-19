@@ -170,6 +170,23 @@ make_mock_mrmfit <- function(type        = "gompertz",
   mock_formula <- list(resp = "opps")
   class(mock_formula) <- "brmsformula"
 
+  # Build params_hier_unit so hlpr_params() can work on mock objects
+  # (avoids calling brms::summary() which fails on mocks).
+ # Raw scaled center values matching the mock draws means
+  raw_center <- c(b = -5, c = 0.1, d = 0.9, e = 0.5)
+  raw_lower  <- c(b = -6, c = 0.06, d = 0.8, e = 0.4)
+  raw_upper  <- c(b = -4, c = 0.14, d = 1.0, e = 0.6)
+
+  unscaled_center <- hlpr_unscale_params(raw_center, scale_values, type)
+  unscaled_lower  <- hlpr_unscale_params(raw_lower,  scale_values, type)
+  unscaled_upper  <- hlpr_unscale_params(raw_upper,  scale_values, type)
+
+  mock_params_hier_unit <- list(
+    center = as.list(unscaled_center),
+    lower  = as.list(unscaled_lower),
+    upper  = as.list(unscaled_upper)
+  )
+
   mock <- list(
     data         = mock_data,
     formula      = mock_formula,
@@ -186,7 +203,8 @@ make_mock_mrmfit <- function(type        = "gompertz",
     R2           = mock_r2,
     summary      = mock_summary,
     returnes_ranges = NULL,
-    params_summary  = NULL
+    params_summary  = NULL,
+    params_hier_unit = mock_params_hier_unit
   )
 
   class(mock) <- c("mrmfit", "mock_brmsfit", "brmsfit")

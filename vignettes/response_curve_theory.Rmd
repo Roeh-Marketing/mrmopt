@@ -559,5 +559,7 @@ structure. The key distinctions are:
   Gompertz, and reflected Gompertz variants place the inflection at 50%,
   \~37%, and \~63% of the response range respectively.
 
-Fitting begins with `fit_response()`. The next vignette covers the full
-fitting and analysis workflow using a realistic simulated dataset.
+Fitting begins with `fit_response()`. See
+[Getting Started](getting_started.html) for the full workflow, and
+[Priors & Model Tuning](priors_and_tuning.html) for guidance on how these
+mathematical properties inform prior specification.

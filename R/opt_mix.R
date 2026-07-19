@@ -5,20 +5,55 @@
 #' and posterior-sampling optimization (slower, returns a distribution of
 #' solutions reflecting Bayesian uncertainty).
 #'
+#' Five objectives are available (the last two are cost-per-KPI
+#' convenience wrappers around the ROI objectives):
+#' \describe{
+#'   \item{`"max_kpi"` (default)}{Maximize total KPI given a fixed budget
+#'     constraint.}
+#'   \item{`"target_roi"`}{Maximize incremental KPI while keeping portfolio
+#'     ROI \eqn{\ge} `target_roi`.
+#'     The budget is an *output*, not an input.
+#'     ROI is defined as total incremental KPI (f(x) - f(0)) divided by
+#'     total spend.}
+#'   \item{`"target_mroi"`}{Set each channel's spend to the point where its
+#'     marginal return (dy/dx) equals `target_mroi`.
+#'     The budget is an *output* — the sum of per-channel solutions.}
+#'   \item{`"target_cpk"`}{Same optimization as `"target_roi"` but framed
+#'     as a cost-per-KPI ceiling: keep average CPK \eqn{\le} `target_cpk`.
+#'     Internally converts to `target_roi = 1 / target_cpk`. Useful when the
+#'     KPI is a non-revenue metric (leads, visits, etc.).}
+#'   \item{`"target_mcpk"`}{Same optimization as `"target_mroi"` but framed
+#'     as a marginal cost-per-KPI threshold: stop spending on a channel once
+#'     the marginal cost of the next KPI unit exceeds `target_mcpk`.
+#'     Internally converts to `target_mroi = 1 / target_mcpk`.}
+#' }
+#'
 #' @param mrms A named list of `mrmfit` objects (one per channel).
 #' @param method One of `"point"` (default) or `"posterior"`. Point uses
 #'   posterior median parameters; posterior optimizes over multiple MCMC draws.
-#' @param objective One of `"max_kpi"` (default): maximize total KPI given a
-#'   budget constraint.
-#' @param budget Total budget for the period. If `NULL` (default), inferred
-#'   from total current weekly spend across channels.
+#' @param objective One of `"max_kpi"` (default), `"target_roi"`,
+#'   `"target_mroi"`, `"target_cpk"`, or `"target_mcpk"`.
+#'   See **Details**.
+#' @param budget Total budget for the period. Required for `"max_kpi"`;
+#'   ignored (with a message) for flexible-budget objectives. If `NULL`
+#'   (default), inferred from total current weekly spend.
+#' @param target_roi Numeric; minimum acceptable portfolio ROI
+#'   (incremental KPI / spend). Required when `objective = "target_roi"`.
+#' @param target_mroi Numeric; target marginal return per dollar. Required
+#'   when `objective = "target_mroi"`.
+#' @param target_cpk Numeric; maximum acceptable average cost per KPI unit
+#'   (spend / incremental KPI). Required when `objective = "target_cpk"`.
+#' @param target_mcpk Numeric; maximum acceptable marginal cost per KPI unit.
+#'   Required when `objective = "target_mcpk"`.
 #' @param n_weeks Number of weeks the budget covers. Used to convert a period
 #'   budget to weekly optimization. Default `1` (budget is already weekly).
 #'   Convenience values: use `52` for annual, `13` for quarterly, `4` for
 #'   monthly.
 #' @param constraints A data frame with per-channel bounds. Must contain
 #'   columns `channel`, `min_spend`, `max_spend`. If `NULL` (default),
-#'   constraints are auto-generated from model return rate ranges.
+#'   constraints are auto-generated from model return rate ranges. Note:
+#'   share-based constraints (`min_share`/`max_share`) are only supported
+#'   for `objective = "max_kpi"`.
 #' @param bounds_multiplier When `constraints` is `NULL`, multiplier applied
 #'   to auto-detected spend ranges. Default `3`.
 #' @param n_draws Number of posterior draws to optimize over when
@@ -26,11 +61,14 @@
 #' @param seed Random seed for draw sampling. Default `NULL`.
 #' @param parallel Logical; use `future.apply` for parallel posterior
 #'   optimization. Default `FALSE`. Requires a `future::plan()` to be set.
+#'   Ignored for `"target_mroi"` (per-channel root-finding is fast).
 #' @param xtol_rel Relative tolerance for nloptr. Default `1e-8`.
+#'   Ignored for `"target_mroi"`.
 #' @param maxeval Maximum nloptr evaluations per solve. Default `1000`.
+#'   Ignored for `"target_mroi"`.
 #' @param verbose Print progress information. Default `TRUE`.
 #'
-#' @return An `opt_mix_result` S3 object. Both methods return the same
+#' @return An `opt_mix_result` S3 object. All objectives return the same
 #'   top-level structure:
 #'   \itemize{
 #'     \item `$solution` — tibble with one row per channel containing current
@@ -38,9 +76,21 @@
 #'       columns. Posterior results include `_lower`/`_upper` CI columns.
 #'     \item `$constraints` — tibble: channel, lb, ub, x0.
 #'     \item `$budget_info` — list: total_budget, weekly_budget, n_weeks,
-#'       current_weekly.
+#'       current_weekly. For flexible-budget objectives (`target_roi`,
+#'       `target_mroi`), `weekly_budget` and `total_budget` are *outputs*
+#'       computed from the optimal solution.
 #'     \item `$method` — `"point"` or `"posterior"`.
+#'     \item `$objective` — the objective used.
 #'     \item `$mrms` — the named list of `mrmfit` models.
+#'   }
+#'   Objective-specific fields:
+#'   \itemize{
+#'     \item `$target_roi` / `$achieved_roi` — for `"target_roi"` objective.
+#'     \item `$target_mroi` / `$channel_mroi` — for `"target_mroi"` objective.
+#'     \item `$target_cpk` / `$achieved_cpk` — for `"target_cpk"` objective.
+#'       The underlying `$target_roi` / `$achieved_roi` are also available.
+#'     \item `$target_mcpk` / `$channel_mcpk` — for `"target_mcpk"` objective.
+#'       The underlying `$target_mroi` / `$channel_mroi` are also available.
 #'   }
 #'   Point-only fields: `$nloptr_result`, `$response_funs`. \cr
 #'   Posterior-only fields: `$draws_matrix`, `$kpi_matrix`,
@@ -58,8 +108,13 @@
 opt_mix <- function(
     mrms,
     method = c("point", "posterior"),
-    objective = "max_kpi",
+    objective = c("max_kpi", "target_roi", "target_mroi",
+                  "target_cpk", "target_mcpk"),
     budget = NULL,
+    target_roi = NULL,
+    target_mroi = NULL,
+    target_cpk = NULL,
+    target_mcpk = NULL,
     n_weeks = 1,
     constraints = NULL,
     bounds_multiplier = 3,
@@ -71,13 +126,43 @@ opt_mix <- function(
     verbose = TRUE
 ) {
 
-  method <- match.arg(method)
+  method    <- match.arg(method)
+  objective <- match.arg(objective)
 
   # opt_mix is an intended consumer of as_mrmfit_list() output, so suppress the
   # per-unit "view" warnings emitted by the functions it calls internally.
   .uv <- options(mrmopt.unit_view_depth =
                    getOption("mrmopt.unit_view_depth", 0L) + 1L)
   on.exit(options(.uv), add = TRUE)
+
+  # --- CPK / mCPK conversion (reciprocal wrappers) ---
+  # Store the original objective for reporting, then map to the underlying
+  # ROI/mROI solver.
+  cpk_mode <- objective %in% c("target_cpk", "target_mcpk")
+
+  if (objective == "target_cpk") {
+    if (is.null(target_cpk) || !is.numeric(target_cpk) || target_cpk <= 0) {
+      stop("`target_cpk` must be a positive number when objective = 'target_cpk'.")
+    }
+    target_roi <- 1 / target_cpk
+  }
+
+  if (objective == "target_mcpk") {
+    if (is.null(target_mcpk) || !is.numeric(target_mcpk) || target_mcpk <= 0) {
+      stop("`target_mcpk` must be a positive number when objective = 'target_mcpk'.")
+    }
+    target_mroi <- 1 / target_mcpk
+  }
+
+  # Map CPK objectives to their underlying ROI solver
+  solver_objective <- switch(
+    objective,
+    target_cpk  = "target_roi",
+    target_mcpk = "target_mroi",
+    objective
+  )
+
+  flexible_budget <- solver_objective %in% c("target_roi", "target_mroi")
 
   # --- Validation ---
   if (!is.list(mrms) || !all(sapply(mrms, inherits, "mrmfit"))) {
@@ -87,13 +172,48 @@ opt_mix <- function(
     stop("`mrms` must be a named list. Use channel names as list names.")
   }
 
+  # Objective-specific validation (after CPK conversion)
+
+  if (solver_objective == "target_roi") {
+    if (is.null(target_roi) || !is.numeric(target_roi) || target_roi <= 0) {
+      stop("`target_roi` must be a positive number when objective = 'target_roi'.")
+    }
+    if (!is.null(budget)) {
+      message("Note: `budget` is ignored for objective = '", objective,
+              "' (budget is an output).")
+    }
+  }
+
+  if (solver_objective == "target_mroi") {
+    if (is.null(target_mroi) || !is.numeric(target_mroi) || target_mroi <= 0) {
+      stop("`target_mroi` must be a positive number when objective = 'target_mroi'.")
+    }
+    if (!is.null(budget)) {
+      message("Note: `budget` is ignored for objective = '", objective,
+              "' (budget is an output).")
+    }
+  }
+
+  # Warn about share constraints with flexible budget
+  if (flexible_budget && !is.null(constraints)) {
+    has_shares <- any(c("min_share", "max_share") %in% names(constraints))
+    if (has_shares) {
+      warning("Share-based constraints (min_share/max_share) are ignored for ",
+              "flexible-budget objectives ('", objective, "'). ",
+              "Only absolute bounds (min_spend/max_spend) are used.")
+    }
+  }
+
   channels <- names(mrms)
   n_channels <- length(mrms)
 
   # --- Budget ---
   current_weekly <- map_dbl(mrms, hlpr_get_weekly_spend)
 
-  if (is.null(budget)) {
+  if (flexible_budget) {
+    # Budget is an output; use current spend as reference for constraint parsing
+    weekly_budget <- sum(current_weekly)
+  } else if (is.null(budget)) {
     weekly_budget <- sum(current_weekly)
     if (verbose) {
       cat("No budget supplied; using total current weekly spend:",
@@ -114,37 +234,137 @@ opt_mix <- function(
   if (is.null(constraints)) {
     constr <- hlpr_auto_constraints(mrms, weekly_budget, bounds_multiplier)
   } else {
+    if (flexible_budget) {
+      # Strip share columns for flexible-budget objectives
+      share_cols <- intersect(c("min_share", "max_share"), names(constraints))
+      if (length(share_cols) > 0) {
+        constraints <- constraints[, !names(constraints) %in% share_cols,
+                                   drop = FALSE]
+      }
+    }
     constr <- hlpr_parse_constraints(constraints, channels, weekly_budget)
   }
 
   if (verbose) {
+    dollar_fmt <- function(v) paste0("$", formatC(v, format = "f",
+                                                   big.mark = ",", digits = 0))
+    obj_label <- switch(
+      objective,
+      max_kpi     = "max_kpi",
+      target_roi  = paste0("target_roi >= ", target_roi),
+      target_mroi = paste0("target_mroi = ", target_mroi),
+      target_cpk  = paste0("target_cpk <= ", dollar_fmt(target_cpk)),
+      target_mcpk = paste0("target_mcpk <= ", dollar_fmt(target_mcpk))
+    )
     cat("\nOptimization setup:\n")
     cat("  Channels:      ", n_channels, "\n")
     cat("  Method:        ", method, "\n")
-    cat("  Weekly budget: ", format(round(weekly_budget), big.mark = ","), "\n")
-    if (n_weeks > 1) {
-      cat("  Period budget: ", format(round(weekly_budget * n_weeks), big.mark = ","),
-          " (", n_weeks, " weeks)\n")
+    cat("  Objective:     ", obj_label, "\n")
+    if (!flexible_budget) {
+      cat("  Weekly budget: ", format(round(weekly_budget), big.mark = ","), "\n")
+      if (n_weeks > 1) {
+        cat("  Period budget: ", format(round(weekly_budget * n_weeks), big.mark = ","),
+            " (", n_weeks, " weeks)\n")
+      }
     }
     cat("\n")
   }
 
-  # --- Dispatch ---
-  if (method == "point") {
-    result <- opt_mix_point(
-      mrms, constr, weekly_budget, budget_info,
-      xtol_rel, maxeval, verbose
-    )
-  } else {
-    result <- opt_mix_posterior(
-      mrms, constr, weekly_budget, budget_info,
-      n_draws, seed, parallel,
-      xtol_rel, maxeval, verbose
-    )
+  # --- Dispatch (CPK objectives map to their ROI solver) ---
+  if (solver_objective == "max_kpi") {
+
+    if (method == "point") {
+      result <- opt_mix_point(
+        mrms, constr, weekly_budget, budget_info,
+        xtol_rel, maxeval, verbose
+      )
+    } else {
+      result <- opt_mix_posterior(
+        mrms, constr, weekly_budget, budget_info,
+        n_draws, seed, parallel,
+        xtol_rel, maxeval, verbose
+      )
+    }
+
+  } else if (solver_objective == "target_roi") {
+
+    if (method == "point") {
+      result <- opt_mix_target_roi_point(
+        mrms, constr, target_roi, budget_info,
+        xtol_rel, maxeval, verbose
+      )
+    } else {
+      result <- opt_mix_target_roi_posterior(
+        mrms, constr, target_roi, budget_info,
+        n_draws, seed, parallel,
+        xtol_rel, maxeval, verbose
+      )
+    }
+
+  } else if (solver_objective == "target_mroi") {
+
+    if (method == "point") {
+      result <- opt_mix_target_mroi_point(
+        mrms, constr, target_mroi, budget_info, verbose
+      )
+    } else {
+      result <- opt_mix_target_mroi_posterior(
+        mrms, constr, target_mroi, budget_info,
+        n_draws, seed, verbose
+      )
+    }
+
   }
 
-  result$method <- method
-  result$mrms <- mrms
+  result$method    <- method
+  result$objective <- objective
+  result$mrms      <- mrms
+
+  # Objective-specific metadata (NULL when not applicable)
+  # ROI-family: target_roi and target_cpk both run the ROI solver
+  if (solver_objective == "target_roi") {
+    result$target_roi <- target_roi
+    # achieved_roi is set by the internal function
+  } else {
+    result$target_roi   <- NULL
+    result$achieved_roi <- NULL
+  }
+
+  # mROI-family: target_mroi and target_mcpk both run the mROI solver
+  if (solver_objective == "target_mroi") {
+    result$target_mroi <- target_mroi
+    # channel_mroi is set by the internal function
+  } else {
+    result$target_mroi  <- NULL
+    result$channel_mroi <- NULL
+  }
+
+  # CPK convenience fields (reciprocals of ROI values)
+  if (objective == "target_cpk") {
+    result$target_cpk   <- target_cpk
+    result$achieved_cpk <- if (!is.null(result$achieved_roi) &&
+                               result$achieved_roi > 0) {
+      1 / result$achieved_roi
+    } else {
+      NA_real_
+    }
+  } else {
+    result$target_cpk   <- NULL
+    result$achieved_cpk <- NULL
+  }
+
+  if (objective == "target_mcpk") {
+    result$target_mcpk  <- target_mcpk
+    result$channel_mcpk <- if (!is.null(result$channel_mroi)) {
+      1 / result$channel_mroi
+    } else {
+      NULL
+    }
+  } else {
+    result$target_mcpk  <- NULL
+    result$channel_mcpk <- NULL
+  }
+
   class(result) <- "opt_mix_result"
   result
 }

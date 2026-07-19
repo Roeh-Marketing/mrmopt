@@ -1,0 +1,272 @@
+---
+title: "Hierarchical Models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Hierarchical Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 7,
+  fig.height = 4.5,
+  message  = FALSE,
+  warning  = FALSE
+)
+library(mrmopt)
+library(dplyr)
+library(ggplot2)
+```
+
+Media channels are rarely homogeneous. TV spend spans broadcast, cable, and
+streaming — each with different audience reach and saturation dynamics. Social
+covers multiple partners, tactics, and creatives. Standard response curve
+modeling treats the channel as a single unit, which either overfits sparse
+sub-channel data or discards useful granularity.
+
+`fit_response_hier()` fits a single hierarchical model where curve parameters
+are **partially pooled** across sub-channel groupings. Sparse units borrow
+strength from better-identified peers, while well-observed units retain their
+individual character. This vignette walks through the full hierarchical
+workflow using the built-in `mrmopt_hier_data` dataset.
+
+---
+
+## The data
+
+`mrmopt_hier_data` contains weekly spend and conversions for eight TV partners
+nested within three subtypes:
+
+```{r data}
+data(mrmopt_hier_data)
+mrmopt_hier_data
+```
+
+```{r data-summary}
+mrmopt_hier_data |>
+  group_by(subtype, partner) |>
+  summarise(
+    weeks       = n(),
+    avg_spend   = mean(spend),
+    avg_conv    = mean(conversions),
+    .groups     = "drop"
+  )
+```
+
+The hierarchy has two levels: `subtype` (Broadcast, Cable, Streaming) and
+`partner` (the individual units within each subtype). Broadcast partners have
+higher spend and ceiling than Streaming partners, but all share a common curve
+family.
+
+```{r data-plot, fig.height = 5}
+ggplot(mrmopt_hier_data, aes(x = spend, y = conversions)) +
+  geom_point(alpha = 0.4, size = 1) +
+  facet_wrap(~partner, scales = "free") +
+  scale_x_continuous(labels = scales::dollar_format(scale = 1e-3, suffix = "k")) +
+  labs(x = "Weekly Spend", y = "Conversions") +
+  theme_minimal()
+```
+
+---
+
+## When to use hierarchical models
+
+Use `fit_response_hier()` when:
+
+- A channel has **natural sub-groups** (partners, tactics, creatives, regions)
+  that share a common response shape but differ in scale
+- Some sub-groups have **sparse data** — too few weeks to identify a curve on
+  their own, but enough to contribute information when pooled
+- You want **per-unit response curves** for optimization or reporting, but don't
+  want to fit each unit independently and risk overfitting
+
+Do not use hierarchical models when:
+
+- Sub-groups have fundamentally different response dynamics (different curve
+  *types*, not just different parameters). Fit them separately.
+- You have only one grouping level with 2 groups — the pooling SD will be
+  poorly identified.
+- All sub-groups have ample data and you don't need borrowing. Independent fits
+  via `fit_response()` are simpler and faster.
+
+---
+
+## Fit the hierarchical model
+
+Specify the grouping columns in order from broadest to finest:
+
+```{r fit-hier, message = FALSE}
+fit_tv <- fit_response_hier(
+  data           = mrmopt_hier_data,
+  spend          = "spend",
+  kpi            = "conversions",
+  date           = "week",
+  group          = c("subtype", "partner"),
+  type           = "gompertz",
+  pool           = c("b", "e", "d"),
+  midpoint_range = c(0.1, 0.6),
+  ceiling_max    = 3,
+  refresh        = 0,
+  iter = 1000,
+  chains = 2
+)
+```
+
+The `group` argument defines the nesting structure. With `group = c("subtype",
+"partner")`, the model fits:
+
+- **Fixed effects**: The channel-level (population) mean curve
+- **Random effects at level 1** (`subtype`): Deviations for Broadcast, Cable,
+  Streaming
+- **Random effects at level 2** (`subtype:partner`): Partner-level deviations
+  nested within subtypes
+
+The `pool` argument controls which parameters receive random effects. The
+default `c("b", "e", "d")` pools steepness, midpoint, and ceiling. The floor
+`c` is shared across all units — it represents baseline conversions at zero
+spend, which is usually a channel-level property.
+
+---
+
+## Diagnostics
+
+Check convergence the same way as a single-channel model:
+
+```{r diag-hier, fig.height = 6}
+mrm_plot_hier_diagnostics(fit_tv)
+```
+
+Look for the same targets: clean trace plots, Rhat ≤ 1.01, ESS > 400. The
+hierarchical model has more parameters (population + group SDs + per-unit
+deviations), so convergence can be slower. If you see issues, try:
+
+- Increasing `iter` and `warmup`
+- Reducing the number of pooled parameters (e.g., `pool = c("b", "e")`)
+- Increasing `adapt_delta` via `control = list(adapt_delta = 0.99)`
+
+---
+
+## Summaries
+
+`print()` provides a concise overview:
+
+```{r print-hier}
+print(fit_tv)
+```
+
+`mrm_summary_hier()` produces a detailed summary with one row per unit at every
+hierarchy level, plus a channel-level aggregate:
+
+```{r summary-hier}
+mrm_summary_hier(fit_tv)
+```
+
+Each row shows the fitted curve parameters, current performance, and the
+efficient operating range (range_min to range_max) for that unit.
+
+---
+
+## Visualization
+
+### Response curves by level
+
+The dashboard view shows response curves at each hierarchy level:
+
+```{r plot-hier-dashboard, fig.height = 8}
+mrm_plot_hier(fit_tv)
+```
+
+For response curves at a specific level:
+
+```{r plot-hier-response, fig.height = 5}
+mrm_plot_hier_response(fit_tv)
+```
+
+### Shrinkage
+
+The shrinkage plot shows how each unit's parameter estimate is pulled toward the
+group mean by partial pooling. Units with more data are pulled less; units with
+sparse data are pulled more:
+
+```{r plot-shrinkage}
+mrm_plot_hier_shrinkage(fit_tv, param = "d")
+```
+
+This is the core benefit of hierarchical modeling — sparse partners get
+regularized estimates rather than noisy independent fits.
+
+---
+
+## Per-unit optimization
+
+To optimize across sub-channel units, convert the hierarchical fit to a list of
+single-curve model views using `as_mrmfit_list()`:
+
+```{r as-list}
+unit_fits <- as_mrmfit_list(fit_tv)
+names(unit_fits)
+```
+
+Each element is an `mrmfit_hier_unit` object that behaves like a regular
+`mrmfit` for optimization purposes. Pass the list to `opt_mix()`:
+
+```{r opt-units}
+opt_units <- opt_mix(unit_fits, budget = 130000)
+opt_summary(opt_units)
+```
+
+The optimizer now allocates spend across all eight partners simultaneously,
+respecting each unit's response curve:
+
+```{r opt-plot, fig.height = 6}
+opt_plot_curves(opt_units)
+```
+
+### Optimizing at a higher level
+
+By default, `as_mrmfit_list()` extracts at the innermost (finest) level. To
+optimize at the subtype level instead:
+
+```{r opt-subtype}
+subtype_fits <- as_mrmfit_list(fit_tv, level = "subtype")
+names(subtype_fits)
+```
+
+```{r opt-subtype-result}
+opt_subtypes <- opt_mix(subtype_fits, budget = 130000)
+opt_summary(opt_subtypes)
+```
+
+This is useful when you control budget at the subtype level but want the
+subtype-level curves to reflect partial pooling from the partner data below.
+
+---
+
+## The `pool` parameter
+
+The choice of which parameters to pool affects how much information is shared:
+
+| Setting | Effect |
+|---------|--------|
+| `pool = c("b", "e", "d")` | Default. Shape and scale vary by unit. Most flexible. |
+| `pool = c("b", "e")` | Shape varies; ceiling `d` is fixed at channel level. Use when units have similar market size. |
+| `pool = c("d")` | Only scale varies; shape is shared. Use when units have similar saturation dynamics but different sizes. |
+| `pool = c("b", "c", "d", "e")` | All four parameters pooled. Maximum borrowing. |
+
+Adding more pooled parameters increases model complexity and can slow
+convergence. Start with the default and remove parameters from `pool` if
+convergence is poor or if domain knowledge says certain parameters should be
+shared.
+
+---
+
+## Where to go next
+
+| Topic | Vignette |
+|-------|----------|
+| Budget optimization objectives and constraints | [Optimization](optimization.html) |
+| Prior tuning when hierarchical fits struggle | [Priors & Model Tuning](priors_and_tuning.html) |
+| Mathematical foundations of the six curve forms | [Response Curve Theory](response_curve_theory.html) |

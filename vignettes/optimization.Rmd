@@ -1,0 +1,365 @@
+---
+title: "Optimization"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Optimization}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 7,
+  fig.height = 4.5,
+  message  = FALSE,
+  warning  = FALSE
+)
+library(mrmopt)
+library(dplyr)
+library(ggplot2)
+```
+
+`opt_mix()` takes a portfolio of fitted response curves and finds the spend
+allocation that achieves a specified objective — maximizing KPI, hitting a ROI
+target, or reaching a marginal efficiency threshold. This vignette covers all
+five objectives, the constraint system, point vs. posterior methods, and how
+to interpret and visualize results.
+
+---
+
+## Setup: fit the portfolio
+
+We'll use all five channels from `mrmopt_data`. In practice, you should have
+already run diagnostics on each fit (see
+[Diagnostics & Model Comparison](diagnostics_and_comparison.html)).
+
+```{r fit-all, message = FALSE}
+channel_types <- list(
+  "Paid Search"  = "log_logistic",
+  "Paid Social"  = "gompertz",
+  "Display"      = "gompertz",
+  "Online Video" = "gompertz",
+  "TV"           = "gompertz"
+)
+
+fits <- lapply(names(channel_types), function(ch) {
+  fit_response(
+    data  = mrmopt_data |> filter(channel == ch),
+    spend = "spend",
+    kpi   = "conversions",
+    date  = "week",
+    type  = channel_types[[ch]],
+    midpoint_range = c(0.1, 0.5),
+    ceiling_max    = 3,
+    refresh        = 0,
+    iter = 1000,
+    chains = 2
+  )
+})
+names(fits) <- names(channel_types)
+```
+
+The current total weekly spend across all channels:
+
+```{r current-budget}
+current_budget <- sum(sapply(fits, function(f) {
+  mean(f$data[[f$spend_col]])
+}))
+cat("Current weekly budget: $", scales::comma(round(current_budget)), "\n")
+```
+
+---
+
+## Objective 1: Maximize KPI (fixed budget)
+
+The default objective. Given a total budget, find the allocation that maximizes
+total predicted KPI:
+
+```{r opt-max-kpi}
+opt <- opt_mix(fits, budget = 200000)
+```
+
+`opt_summary()` prints a formatted allocation table:
+
+```{r opt-summary}
+opt_summary(opt)
+```
+
+`opt_table()` returns the same information as a tidy tibble, useful for
+downstream analysis or reporting:
+
+```{r opt-table}
+opt_table(opt) |>
+  select(channel, current_spend, optimal_spend, spend_delta_pct,
+         current_kpi, optimal_kpi, kpi_delta_pct)
+```
+
+### Visualizing the result
+
+```{r plot-allocation}
+opt_plot_allocation(opt)
+```
+
+The dumbbell chart shows the magnitude and direction of each reallocation:
+
+```{r plot-comparison}
+opt_plot_comparison(opt)
+```
+
+To see where each channel's optimal spend falls on its response curve:
+
+```{r plot-curves, fig.height = 6}
+opt_plot_curves(opt)
+```
+
+And on the marginal/average return curves — the view that explains *why* the
+optimizer moved spend the way it did:
+
+```{r plot-returns, fig.height = 6}
+opt_plot_returns(opt)
+```
+
+At the optimum, marginal returns are equalized across channels (within
+constraint bounds). Channels where the optimal point has higher MR than others
+are constrained — the optimizer would like to allocate more but is hitting a
+bound.
+
+---
+
+## Objective 2: Target ROI (flexible budget)
+
+Instead of fixing the budget and maximizing KPI, target a minimum portfolio
+ROI and let the optimizer find the budget:
+
+```{r opt-roi}
+opt_roi <- opt_mix(fits, objective = "target_roi", target_roi = 2.0)
+opt_summary(opt_roi)
+```
+
+The budget is now an *output*, not an input:
+
+```{r roi-budget}
+cat("Weekly budget at target ROI:", scales::dollar(opt_roi$budget_info$weekly_budget), "\n")
+cat("Achieved ROI:", round(opt_roi$achieved_roi, 2), "\n")
+```
+
+ROI here is defined as total incremental KPI divided by total spend:
+
+$$\text{ROI} = \frac{\sum_i [f_i(x_i) - f_i(0)]}{\sum_i x_i}$$
+
+where $$f_i(0)$$ is the floor (baseline KPI at zero spend) for each channel.
+
+---
+
+## Objective 3: Target marginal ROI (per-channel)
+
+Target mROI sets each channel's spend to where its marginal return equals a
+threshold. This is a per-channel operation — no cross-channel optimization is
+needed:
+
+```{r opt-mroi}
+opt_mroi <- opt_mix(fits, objective = "target_mroi", target_mroi = 0.01)
+opt_summary(opt_mroi)
+```
+
+The resulting budget is the sum of per-channel solutions:
+
+```{r mroi-budget}
+cat("Weekly budget at target mROI:", scales::dollar(opt_mroi$budget_info$weekly_budget), "\n")
+```
+
+Target mROI is useful for setting a "minimum efficiency" threshold: stop
+investing in a channel when the next dollar generates less than `target_mroi`
+units of KPI.
+
+---
+
+## Objectives 4 & 5: Cost-per-KPI framing
+
+For non-revenue KPIs (leads, visits, sign-ups), thinking in ROI (KPI/spend) is
+less natural than cost-per (spend/KPI). The `target_cpk` and `target_mcpk`
+objectives are convenience wrappers:
+
+```{r opt-cpk}
+# "Stop spending when each conversion costs more than $100 on average"
+opt_cpk <- opt_mix(fits, objective = "target_cpk", target_cpk = 100)
+opt_summary(opt_cpk)
+```
+
+```{r opt-mcpk}
+# "Stop spending when the next conversion costs more than $150"
+opt_mcpk <- opt_mix(fits, objective = "target_mcpk", target_mcpk = 150)
+opt_summary(opt_mcpk)
+```
+
+Internally, `target_cpk` converts to `target_roi = 1 / target_cpk` and
+`target_mcpk` converts to `target_mroi = 1 / target_mcpk`.
+
+---
+
+## Point vs. posterior optimization
+
+All objectives support two methods:
+
+### Point estimate (default)
+
+Uses the posterior median parameters for each channel. Fast (< 1 second) and
+produces a single optimal allocation. Good for quick scenario analysis:
+
+```{r point-method}
+opt_point <- opt_mix(fits, budget = 200000, method = "point")
+```
+
+### Posterior
+
+Runs the optimizer over `n_draws` posterior draws, producing a *distribution*
+of optimal allocations that reflects parameter uncertainty:
+
+```{r posterior-method}
+opt_post <- opt_mix(fits, budget = 200000, method = "posterior", n_draws = 100)
+opt_summary(opt_post)
+```
+
+The `[95% CI]` column shows the range of optimal spend across draws. Posterior
+allocation plots include error bars:
+
+```{r plot-post-alloc}
+opt_plot_allocation(opt_post)
+```
+
+`opt_plot_posterior()` shows the full spend distribution per channel:
+
+```{r plot-post-posterior}
+opt_plot_posterior(opt_post)
+```
+
+**When to use posterior**: When the allocation decision matters and you want to
+understand how sensitive it is to parameter uncertainty. Wide distributions
+signal channels where the data doesn't strongly constrain the optimal spend.
+
+**When point is sufficient**: Scenario analysis, quick comparisons, or when all
+channels have tight credible bands.
+
+---
+
+## Period budgets
+
+By default, `opt_mix()` optimizes a single-week budget. To optimize an annual
+or quarterly budget broken into weekly allocations, use `n_weeks`:
+
+```{r period-budget}
+opt_annual <- opt_mix(fits, budget = 10000000, n_weeks = 52)
+opt_summary(opt_annual)
+```
+
+The optimizer finds the optimal *weekly* allocation, then scales to the period.
+The `$solution` tibble contains both weekly and period columns.
+
+---
+
+## Constraints
+
+### Auto-generated (default)
+
+When no `constraints` argument is provided, `opt_mix()` generates bounds
+automatically from each channel's fitted return rate ranges, scaled by
+`bounds_multiplier` (default 3). This prevents the optimizer from extrapolating
+far beyond observed spend levels.
+
+### User-supplied constraints
+
+Pass a data frame with channel-level bounds:
+
+```{r constraints-basic}
+my_constraints <- data.frame(
+  channel   = names(fits),
+  min_spend = c(10000, 5000, 2000, 5000, 50000),
+  max_spend = c(100000, 80000, 30000, 60000, 150000)
+)
+
+opt_constrained <- opt_mix(fits, budget = 200000, constraints = my_constraints)
+opt_summary(opt_constrained)
+```
+
+### Share-based constraints
+
+For `max_kpi` (fixed budget) optimization, you can also set minimum and maximum
+share-of-budget bounds. When both absolute and share constraints are present,
+the tighter bound wins:
+
+```{r constraints-share}
+share_constraints <- data.frame(
+  channel   = names(fits),
+  min_spend = c(10000, 5000, 2000, 5000, 50000),
+  max_spend = c(100000, 80000, 30000, 60000, 150000),
+  min_share = c(0.05, 0.03, 0.01, 0.03, 0.20),
+  max_share = c(0.50, 0.40, 0.15, 0.30, 0.60)
+)
+
+opt_shares <- opt_mix(fits, budget = 200000, constraints = share_constraints)
+opt_summary(opt_shares)
+```
+
+Share-based constraints are only supported for `max_kpi` (fixed budget). They
+are warned about and stripped for flexible-budget objectives, since there is
+no fixed budget to compute shares against.
+
+### Fixed channels
+
+Lock a channel at its current spend with the `fixed` column:
+
+```{r constraints-fixed}
+fixed_constraints <- data.frame(
+  channel   = names(fits),
+  min_spend = c(10000, 5000, 2000, 5000, 50000),
+  max_spend = c(100000, 80000, 30000, 60000, 150000),
+  fixed     = c(FALSE, FALSE, FALSE, FALSE, TRUE)
+)
+
+opt_fixed <- opt_mix(fits, budget = 200000, constraints = fixed_constraints)
+opt_summary(opt_fixed)
+```
+
+When `fixed = TRUE`, the channel's spend is locked at `min_spend` and the
+remaining budget is optimized across the other channels.
+
+---
+
+## Interpreting the solution
+
+### The solution tibble
+
+The core output is `opt$solution`, a tibble with one row per channel:
+
+```{r solution-cols}
+names(opt$solution)
+```
+
+Key column groups:
+
+- **Current state** (`current_weekly_*`): Where each channel sits now (from the
+  fitted model's data)
+- **Optimal state** (`weekly_*`): The optimizer's recommended allocation. For
+  posterior results, includes `_lower` and `_upper` CI columns.
+- **Period totals** (`period_*`): Weekly values × `n_weeks`
+- **Shares** (`spend_share`, `kpi_share`): Fraction of total budget and total
+  KPI
+
+### Response rate and cost-per
+
+The solution includes the response rate (`rr`: KPI per dollar) and cost-per
+(`cost_per`: dollars per KPI unit) at both the current and optimal points. These
+are directly readable from the response curve — they don't require a separate
+calculation.
+
+---
+
+## Where to go next
+
+| Topic | Vignette |
+|-------|----------|
+| Diagnostics to verify fits before optimizing | [Diagnostics & Model Comparison](diagnostics_and_comparison.html) |
+| Tuning priors when fits look wrong | [Priors & Model Tuning](priors_and_tuning.html) |
+| Hierarchical models for sub-channel optimization | [Hierarchical Models](hierarchical_models.html) |

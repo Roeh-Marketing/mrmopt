@@ -100,6 +100,7 @@ opt_table <- function(x, ...) {
 
   # Store metadata as attributes
   attr(result, "method") <- x$method
+  attr(result, "objective") <- x$objective %||% "max_kpi"
   attr(result, "n_weeks") <- n_weeks
   attr(result, "n_draws") <- x$n_draws
 

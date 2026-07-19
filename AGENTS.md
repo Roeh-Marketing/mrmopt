@@ -131,6 +131,25 @@ plot(opt_post, type = "posterior")
 # 5c. Period budgets (e.g., $10M annual)
 opt_annual <- opt_mix(models, budget = 10000000, n_weeks = 52)
 
+# 5d. Flexible budget: target ROI (budget is an output)
+opt_roi <- opt_mix(models, objective = "target_roi", target_roi = 2.5)
+opt_roi$achieved_roi       # actual ROI at solution
+opt_roi$budget_info$weekly_budget  # discovered budget
+
+# 5e. Flexible budget: target mROI (per-channel marginal return threshold)
+opt_mroi <- opt_mix(models, objective = "target_mroi", target_mroi = 0.5)
+opt_mroi$channel_mroi      # per-channel mROI at solution
+opt_mroi$budget_info$weekly_budget  # sum of per-channel solutions
+
+# 5f. Cost-per-KPI framing (for non-revenue KPIs like leads/visits)
+# Same solver as target_roi, but input/output framed as cost-per
+opt_cpk <- opt_mix(models, objective = "target_cpk", target_cpk = 50)
+opt_cpk$achieved_cpk       # actual CPK at solution (e.g. $48.50/lead)
+
+# 5g. Marginal cost-per-KPI (stop spending when next lead costs > $100)
+opt_mcpk <- opt_mix(models, objective = "target_mcpk", target_mcpk = 100)
+opt_mcpk$channel_mcpk      # per-channel marginal cost-per at solution
+
 # 6. Visualize on response curves
 plot(opt, type = "curves")     # response curves with current + optimal points
 plot(opt, type = "returns")    # AR/MR curves with current + optimal points
@@ -147,22 +166,47 @@ summary(opt)                   # tidy comparison tibble with deltas
 
 ### `opt_mix()` — Main Entry Point
 
-Single function with two methods:
+Single function with two methods and three objectives:
+
+**Methods:**
 - **`method = "point"`** (default): Uses posterior median parameters → single nloptr solve (~1s)
 - **`method = "posterior"`**: Optimizes over N posterior draws → distribution of solutions (~6s for 200 draws × 9 channels)
+
+**Objectives:**
+- **`objective = "max_kpi"`** (default): Maximize total KPI under a fixed budget equality constraint `sum(x) == budget`.
+- **`objective = "target_roi"`**: Maximize incremental KPI subject to portfolio ROI ≥ `target_roi`. Budget is free (output, not input). ROI = Σ[f(x)-f(0)] / Σx. Uses nloptr COBYLA with an inequality constraint.
+- **`objective = "target_mroi"`**: Per-channel root-finding — set each channel's spend to where dy/dx = `target_mroi`. No multi-channel optimizer needed; uses grid search + `uniroot()` per channel. Budget is the sum of per-channel solutions.
+- **`objective = "target_cpk"`**: Cost-per-KPI wrapper around `target_roi`. Same solver, but accepts `target_cpk` (spend/KPI) instead of `target_roi` (KPI/spend). Internally converts: `target_roi = 1 / target_cpk`. Output reports CPK instead of ROI. Useful for non-revenue KPIs (leads, visits, etc.).
+- **`objective = "target_mcpk"`**: Marginal-cost-per-KPI wrapper around `target_mroi`. Accepts `target_mcpk` (marginal spend per KPI unit) instead of `target_mroi` (marginal KPI per dollar). Internally converts: `target_mroi = 1 / target_mcpk`.
 
 ### Internal Architecture
 
 ```
 opt_mix()
 ├─ hlpr_auto_constraints() / hlpr_parse_constraints()  # constraint setup
-├─ opt_mix_point()          # point-estimate path
-│  ├─ mrm_response_function()  # extract median curve
-│  └─ hlpr_opt_solve()         # nloptr COBYLA
-└─ opt_mix_posterior()      # posterior path
-   ├─ hlpr_extract_draws()     # pre-extract & unscale all draws (fast path)
-   ├─ make_draw_objective()    # build objective from raw draws + rm_dispatch
-   └─ hlpr_opt_solve() × N    # one solve per draw (optionally parallel)
+│
+├─ objective = "max_kpi"
+│  ├─ opt_mix_point()          # point-estimate path
+│  │  ├─ mrm_response_function()  # extract median curve
+│  │  └─ hlpr_opt_solve()         # nloptr COBYLA (sum(x)==budget)
+│  └─ opt_mix_posterior()      # posterior path
+│     ├─ hlpr_extract_draws()     # pre-extract & unscale all draws
+│     ├─ make_draw_objective()    # build objective from raw draws + rm_dispatch
+│     └─ hlpr_opt_solve() × N    # one solve per draw
+│
+├─ objective = "target_roi"
+│  ├─ opt_mix_target_roi_point()
+│  │  ├─ hlpr_baseline_kpi()      # f(0) per channel for ROI constraint
+│  │  └─ hlpr_opt_solve()         # nloptr COBYLA (ROI inequality, no budget eq)
+│  └─ opt_mix_target_roi_posterior()
+│     ├─ hlpr_extract_draws() + hlpr_baseline_kpi_vec()
+│     └─ hlpr_opt_solve() × N
+│
+└─ objective = "target_mroi"
+   ├─ opt_mix_target_mroi_point()
+   │  └─ hlpr_find_mroi_spend() per channel  # grid + uniroot
+   └─ opt_mix_target_mroi_posterior()
+      └─ hlpr_find_mroi_spend() per channel per draw
 ```
 
 The posterior path uses raw parameter draws + `rm_dispatch()` instead of `brms::posterior_epred()` — a 10,000x speedup that makes posterior optimization practical.
@@ -172,26 +216,37 @@ The posterior path uses raw parameter draws + `rm_dispatch()` instead of `brms::
 | File | Purpose |
 |------|---------|
 | `R/opt_mix.R` | Main function + constraint helpers (`hlpr_auto_constraints`, `hlpr_parse_constraints`) |
-| `R/hlpr_opt_solve.R` | Thin nloptr wrapper (shared core for both methods) |
+| `R/opt_mix_target_roi.R` | Target ROI point + posterior solvers |
+| `R/opt_mix_target_mroi.R` | Target mROI point + posterior solvers |
+| `R/hlpr_opt_solve.R` | Thin nloptr wrapper (shared core) |
 | `R/hlpr_extract_draws.R` | Pre-extracts & unscales all posterior draws for fast evaluation |
+| `R/hlpr_baseline_kpi.R` | Compute f(0) per channel (scalar + vectorised) for ROI constraint |
+| `R/hlpr_numerical_mr.R` | Numerical marginal return + `hlpr_find_mroi_spend()` root-finder |
 | `R/hlpr_build_solution.R` | Builds the unified solution tibble (current + optimal metrics) |
 | `R/print.opt_mix_result.R` | Formatted console output |
 | `R/plot.opt_mix_result.R` | 6 plot types: allocation, kpi, comparison, posterior, curves, returns |
-| `R/summary.opt_mix_result.R` | Returns tidy comparison tibble with deltas |
+| `R/opt_summary.R` | Formatted console summary (objective-aware) |
+| `R/opt_table.R` | Tidy comparison tibble with deltas |
 | `R/compare.opt_mix_result.R` | `compare()` generic + method: side-by-side diff of two results |
 | `R/plot.opt_mix_compare.R` | Dumbbell plot for compare results (spend + kpi) |
 | `R/hlpr_opt_metrics.R` | Interpolates KPI/AR/MR/CP at arbitrary spend from response_df |
 
 ### Return Structure (`opt_mix_result` S3 class)
 
-Both methods return identical top-level structure:
+All objectives return the same top-level structure:
 - `$solution` — unified tibble (same columns for point and posterior)
 - `$constraints` — tibble: channel, lb, ub, x0
-- `$budget_info` — list: total_budget, weekly_budget, n_weeks, current_weekly
+- `$budget_info` — list: total_budget, weekly_budget, n_weeks, current_weekly.
+  For flexible-budget objectives, `weekly_budget` and `total_budget` are computed from the optimal solution.
 - `$method` — `"point"` or `"posterior"`
+- `$objective` — `"max_kpi"`, `"target_roi"`, or `"target_mroi"`
 - `$mrms` — the named list of `mrmfit` models (used by `curves` and `returns` plots)
 - `$draws_matrix` / `$kpi_matrix` / `$solution_draws` / `$n_draws` / `$draw_ids` — posterior-only (NULL for point)
 - `$nloptr_result` / `$response_funs` — point-only (NULL for posterior)
+- `$target_roi` / `$achieved_roi` — target_roi objective only (NULL otherwise)
+- `$target_mroi` / `$channel_mroi` — target_mroi objective only (NULL otherwise)
+- `$target_cpk` / `$achieved_cpk` — target_cpk objective only (reciprocals of ROI values; NULL otherwise)
+- `$target_mcpk` / `$channel_mcpk` — target_mcpk objective only (reciprocals of mROI values; NULL otherwise)
 
 ### Solution Tibble Columns
 
@@ -219,6 +274,8 @@ Units assume static cost-per-unit (`mrm$cost_per_unit`). NA when model fit witho
 | `fixed` | No | Lock spend at `min_spend` (logical) |
 
 When both absolute and share bounds are present, the tighter constraint wins.
+
+**Note:** Share-based constraints (`min_share`/`max_share`) are only supported for `objective = "max_kpi"` (fixed budget). They are warned about and stripped for flexible-budget objectives (`target_roi`, `target_mroi`) since there is no fixed budget to compute shares against.
 
 ### Plot Types (`plot.opt_mix_result`)
 
@@ -262,7 +319,7 @@ When both absolute and share bounds are present, the tighter constraint wins.
 
 ## Testing Infrastructure
 
-**25 test files** in `tests/testthat/` with **403+ tests**. Key conventions:
+**30 test files** in `tests/testthat/` with **714+ tests**. Key conventions:
 - **`helper-mock.R`** provides `make_mock_mrmfit()` fixture — builds lightweight mock `mrmfit` objects without MCMC, enabling fast isolated tests. Also provides `as_draws_df.mock_brmsfit()` for testing posterior draw extraction.
 - Tests cover: response models, helpers, scaling, fitting (input validation), plotting, palette, parameters, optimization (build_solution, extract_draws, constraints, opt_mix validation)
 - Run with `devtools::test()`
@@ -271,6 +328,8 @@ When both absolute and share bounds are present, the tighter constraint wins.
 
 ## Key Recent Changes (from prior sessions)
 
+- **Cost-per-KPI objectives**: Added `objective = "target_cpk"` and `objective = "target_mcpk"` — convenience wrappers around `target_roi`/`target_mroi` that accept and report cost-per-KPI instead of ROI. Internally converts: `target_roi = 1/target_cpk`, `target_mroi = 1/target_mcpk`. Return gains `$target_cpk`/`$achieved_cpk`, `$target_mcpk`/`$channel_mcpk`. `opt_summary.R` displays CPK/mCPK framing. Useful for non-revenue KPIs (leads, visits, opportunities).
+- **Flexible-budget optimisation objectives**: Added `objective = "target_roi"` and `objective = "target_mroi"` to `opt_mix()`. Target ROI maximises incremental KPI subject to portfolio ROI ≥ target (budget is an output). Target mROI sets each channel's spend where dy/dx = target (per-channel root-finding, no multi-channel solver). Both support `method = "point"` and `method = "posterior"`. New files: `R/opt_mix_target_roi.R`, `R/opt_mix_target_mroi.R`, `R/hlpr_baseline_kpi.R`, `R/hlpr_numerical_mr.R`. Return structure gains `$objective`, `$target_roi`/`$achieved_roi`, `$target_mroi`/`$channel_mroi`. `opt_summary.R` and `opt_table.R` are objective-aware. Mock fixture (`helper-mock.R`) now includes `params_hier_unit` for `hlpr_params()` compatibility.
 - **opt_mix API redesign**: `summary.opt_mix_result()` now produces the formatted console output (previously done by `print`). `print.opt_mix_result()` is a thin wrapper calling `summary()`. `opt_table()` is a new plain exported function that returns the tidy comparison tibble (previously returned by `summary()`). All internal `plot_opt_*` helpers are now standalone exported functions named `opt_plot_allocation()`, `opt_plot_comparison()`, `opt_plot_posterior()`, `opt_plot_curves()`, `opt_plot_returns()`, and `opt_plot_compare()`. `plot.opt_mix_result()` and `plot.opt_mix_compare()` are thin dispatchers calling the `opt_plot_*` functions. `opt_plot_posterior()` now hard-errors (instead of message + fallback) when called on a point result.
 - **`compare()` function**: S3 generic + method for side-by-side diff of two `opt_mix_result` objects with `plot.opt_mix_compare` dumbbell chart.
 - **Response curve overlay plots**: `plot(opt, type = "curves")` shows response curves with current + optimal points; `plot(opt, type = "returns")` shows AR/MR curves at both positions. Uses `hlpr_opt_metrics()` for interpolation.

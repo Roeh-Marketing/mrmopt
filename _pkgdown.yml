@@ -20,6 +20,10 @@ articles:
       - getting_started
   - title: "Guides"
     contents:
+      - priors_and_tuning
+      - diagnostics_and_comparison
+      - optimization
+      - hierarchical_models
       - response_curve_theory
   - title: "Project"
     contents:

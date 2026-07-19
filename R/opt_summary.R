@@ -23,14 +23,29 @@ opt_summary <- function(x, ...) {
   bi  <- x$budget_info
   is_posterior <- x$method == "posterior"
 
+  objective <- x$objective %||% "max_kpi"
+  flexible_budget <- objective %in% c("target_roi", "target_mroi",
+                                      "target_cpk", "target_mcpk")
+
   # --- Header ---
   method_label <- if (is_posterior) {
     paste0("posterior, ", x$n_draws, " draws")
   } else {
     "point"
   }
-  cat(cli_rule(paste0("Optimization Result (", method_label, ")")), "\n")
-  cat("Budget: ", dollar(bi$weekly_budget), "/week", sep = "")
+
+  obj_label <- switch(
+    objective,
+    max_kpi     = "",
+    target_roi  = paste0(", target ROI \u2265 ", round(x$target_roi, 4)),
+    target_mroi = paste0(", target mROI = ", round(x$target_mroi, 6)),
+    target_cpk  = paste0(", target CPK \u2264 ", dollar(x$target_cpk)),
+    target_mcpk = paste0(", target mCPK \u2264 ", dollar(x$target_mcpk))
+  )
+  cat(cli_rule(paste0("Optimization Result (", method_label, obj_label, ")")), "\n")
+
+  budget_word <- if (flexible_budget) "Optimal budget" else "Budget"
+  cat(budget_word, ": ", dollar(bi$weekly_budget), "/week", sep = "")
   if (bi$n_weeks > 1) {
     cat("  |  ", dollar(bi$total_budget), " over ", bi$n_weeks, " weeks", sep = "")
   }
@@ -100,6 +115,33 @@ opt_summary <- function(x, ...) {
   cat("  Change:   KPI ", pct(kpi_change),
       "  |  CP ", ifelse(cp_change >= 0, "+", ""),
       dollar(abs(cp_change)), "\n", sep = "")
+
+  if (flexible_budget) {
+    spend_change <- total_opt_spend - total_cur_spend
+    cat("  Budget \u0394: ", ifelse(spend_change >= 0, "+", ""),
+        dollar(abs(spend_change)), " (", pct(spend_change / total_cur_spend),
+        ")\n", sep = "")
+  }
+
+  # Objective-specific reporting
+  if (objective == "target_roi" && !is.null(x$achieved_roi)) {
+    cat("  Achieved ROI: ", round(x$achieved_roi, 4), "\n", sep = "")
+  }
+  if (objective == "target_cpk" && !is.null(x$achieved_cpk)) {
+    cat("  Achieved CPK: ", dollar(x$achieved_cpk), "\n", sep = "")
+  }
+  if (objective == "target_mroi" && !is.null(x$channel_mroi)) {
+    cat("  Per-channel mROI at solution:\n")
+    for (ch in names(x$channel_mroi)) {
+      cat("    ", ch, ": ", round(x$channel_mroi[ch], 6), "\n", sep = "")
+    }
+  }
+  if (objective == "target_mcpk" && !is.null(x$channel_mcpk)) {
+    cat("  Per-channel marginal CPK at solution:\n")
+    for (ch in names(x$channel_mcpk)) {
+      cat("    ", ch, ": ", dollar(x$channel_mcpk[ch]), "\n", sep = "")
+    }
+  }
 
   if (bi$n_weeks > 1) {
     cat("\n  Period (", bi$n_weeks, " weeks): ",
