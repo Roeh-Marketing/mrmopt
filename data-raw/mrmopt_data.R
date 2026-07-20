@@ -47,7 +47,7 @@ channels <- list(
     curve      = gompertz,
     # b: steepness, c: floor conversions, d: ceiling conversions, e: midpoint spend
     params     = list(b = -0.00020, c = 80, d = 950, e = 42000),
-    noise_sd   = 250
+    noise_sd   = 50
   ),
 
   `Paid Social` = list(
@@ -55,7 +55,7 @@ channels <- list(
     spend_sd   = 6000,
     curve      = logistic,
     params     = list(b = -0.00033, c = 50, d = 620, e = 26000),
-    noise_sd   = 200
+    noise_sd   = 100
   ),
 
   `Display` = list(
@@ -63,7 +63,7 @@ channels <- list(
     spend_sd   = 4000,
     curve      = gompertz,
     params     = list(b = -0.00050, c = 20, d = 340, e = 16000),
-    noise_sd   = 150
+    noise_sd   = 75
   ),
 
   `Online Video` = list(
@@ -71,7 +71,7 @@ channels <- list(
     spend_sd   = 9000,
     curve      = logistic,
     params     = list(b = -0.00022, c = 60, d = 780, e = 33000),
-    noise_sd   = 300
+    noise_sd   = 150
   ),
 
   `TV` = list(
@@ -80,7 +80,7 @@ channels <- list(
     curve      = log_logistic,
     # Log-logistic: b operates on log(spend) scale, no adjustment needed
     params     = list(b = -4.0, c = 100, d = 1800, e = 75000),
-    noise_sd   = 450
+    noise_sd   = 225
   )
 )
 
