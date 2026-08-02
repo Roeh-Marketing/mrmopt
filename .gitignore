@@ -53,3 +53,8 @@ rsconnect/
 dev_*.R
 dev_*.rds
 Rplots.pdf
+
+# Secrets — never commit. API keys live in ~/.Renviron, outside the repo.
+.env
+*.pem
+*.key
