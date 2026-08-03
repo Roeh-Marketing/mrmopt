@@ -13,7 +13,7 @@ Package for media response modeling and optimization.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://bdshaff.github.io/mrmopt/}
+  \item \url{https://roeh-marketing.github.io/mrmopt/}
 }
 
 }

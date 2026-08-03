@@ -6,7 +6,7 @@
 
 - **Version**: 0.1.0
 - **License**: MIT
-- **Docs**: https://bdshaff.github.io/mrmopt/
+- **Docs**: https://roeh-marketing.github.io/mrmopt/
 
 ---
 

@@ -12,12 +12,12 @@ modeling experience, while remaining flexible enough for rigorous applied work.
 
 ``` r
 # install.packages("pak")
-pak::pak("bdshaff/mrmopt")
+pak::pak("Roeh-Marketing/mrmopt")
 ```
 
 ## Workflow
 
-The workflow spans data input through allocation decision. See the [Workflow Overview](https://bdshaff.github.io/mrmopt/workflow.html) vignette for the full diagram and walkthrough.
+The workflow spans data input through allocation decision. See the [Workflow Overview](https://roeh-marketing.github.io/mrmopt/articles/getting_started.html) vignette for the full diagram and walkthrough.
 
 ## Quick Start
 
@@ -89,19 +89,19 @@ opt_plot_curves(opt)             # response curves with optimal spend marked
 ## Documentation and Tutorials
 
 Full documentation, tutorials, and examples are available at
-[bdshaff.github.io/mrmopt](https://bdshaff.github.io/mrmopt/).
+[roeh-marketing.github.io/mrmopt](https://roeh-marketing.github.io/mrmopt/).
 
 | Vignette | Content |
 |----------|---------|
-| [Getting Started](https://bdshaff.github.io/mrmopt/getting_started.html) | End-to-end walkthrough using built-in data |
-| [Fitting & Analysis](https://bdshaff.github.io/mrmopt/fitting_and_analysis.html) | Prior specification, curve types, model inspection |
-| [Diagnostics & Comparison](https://bdshaff.github.io/mrmopt/diagnostics_and_comparison.html) | Convergence checks, curve type comparison |
-| [Optimization](https://bdshaff.github.io/mrmopt/optimization.html) | Budget allocation, constraints, scenario analysis |
-| [Response Curve Theory](https://bdshaff.github.io/mrmopt/response_curve_theory.html) | Mathematical background on the six curve forms |
+| [Getting Started](https://roeh-marketing.github.io/mrmopt/articles/getting_started.html) | End-to-end walkthrough using built-in data |
+| [Fitting & Analysis](https://roeh-marketing.github.io/mrmopt/articles/priors_and_tuning.html) | Prior specification, curve types, model inspection |
+| [Diagnostics & Comparison](https://roeh-marketing.github.io/mrmopt/articles/diagnostics_and_comparison.html) | Convergence checks, curve type comparison |
+| [Optimization](https://roeh-marketing.github.io/mrmopt/articles/optimization.html) | Budget allocation, constraints, scenario analysis |
+| [Response Curve Theory](https://roeh-marketing.github.io/mrmopt/articles/response_curve_theory.html) | Mathematical background on the six curve forms |
 
 ## Roadmap
 
-See the [Roadmap](https://bdshaff.github.io/mrmopt/roadmap.html) for planned
+See the [Roadmap](https://roeh-marketing.github.io/mrmopt/articles/roadmap.html) for planned
 features, including within-channel hierarchical response curves, rolling window
 parameter drift analysis, time-varying response curves, cross-channel synergy
 modeling, and adstock support.

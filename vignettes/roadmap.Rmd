@@ -12,7 +12,7 @@ Items are organized by horizon and reflect both near-term engineering work and
 more exploratory modeling directions.
 
 Feedback and contributions are welcome — open an issue on
-[GitHub](https://github.com/bdshaff/mrmopt/issues) to discuss any of these.
+[GitHub](https://github.com/Roeh-Marketing/mrmopt/issues) to discuss any of these.
 
 ---
 

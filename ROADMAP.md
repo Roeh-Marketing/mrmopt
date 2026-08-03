@@ -5,7 +5,7 @@ Items are organized by horizon and reflect both near-term engineering work and
 more exploratory modeling directions.
 
 Feedback and contributions are welcome — open an issue on
-[GitHub](https://github.com/bdshaff/mrmopt/issues) to discuss any of these.
+[GitHub](https://github.com/Roeh-Marketing/mrmopt/issues) to discuss any of these.
 
 ---
 
@@ -14,7 +14,7 @@ Feedback and contributions are welcome — open an issue on
 ### Within-Channel Hierarchical Response Curves
 
 **New function:** `fit_response_hier()` — **shipped.** See the
-[Hierarchical Response Curves](https://bdshaff.github.io/mrmopt/articles/hierarchical_curves.html)
+[Hierarchical Response Curves](https://roeh-marketing.github.io/mrmopt/articles/hierarchical_models.html)
 article for a worked example, and `design/fit_response_hier.md` for the design.
 
 Media channels are rarely homogeneous. TV spend spans broadcast, cable, and

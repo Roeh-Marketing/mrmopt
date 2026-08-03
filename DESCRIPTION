@@ -32,6 +32,6 @@ Suggests:
     forcats
 Config/Needs/website: brand.yml
 VignetteBuilder: knitr
-URL: https://bdshaff.github.io/mrmopt/
+URL: https://roeh-marketing.github.io/mrmopt/
 Depends: 
     R (>= 4.1.0)
