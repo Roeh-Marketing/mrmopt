@@ -15,7 +15,7 @@ Feedback and contributions are welcome — open an issue on
 
 **New function:** `fit_response_hier()` — **shipped.** See the
 [Hierarchical Response Curves](https://roeh-marketing.github.io/mrmopt/articles/hierarchical_models.html)
-article for a worked example, and `design/fit_response_hier.md` for the design.
+article for a worked example.
 
 Media channels are rarely homogeneous. TV spend spans broadcast, cable, and
 streaming — each with different audience reach and response dynamics. Social
@@ -58,49 +58,53 @@ data-driven — units with more observations get pulled less toward the group me
 
 ---
 
-## Medium-Term
+### Rolling Window Response Curves (`mrm_rolling()`)
 
-### Cross-Channel Synergy Model
+**New function:** `mrm_rolling()`
 
-**New function:** `fit_response_synergy()`
-
-Standard media response modeling assumes channels contribute independently and
-additively to KPI. This is a simplifying assumption that most MMM tools carry
-forward without question. In practice, simultaneous investment across channels
-may produce efficiency gains (or losses) that a purely additive model misses.
-
-`fit_response_synergy()` fits a joint model across all channels where pairwise
-interaction terms — one per channel pair — capture residual co-efficiency
-signals beyond what the individual response curves predict:
+Standard response curve fitting treats the full observation window as a single
+stationary period. In practice, the relationship between spend and KPI shifts
+over time — seasonal demand, competitive pressure, and creative fatigue all
+cause the effective ceiling and saturation point to vary. `mrm_rolling()` makes
+this drift visible by fitting a sequence of response curves across overlapping
+windows of the data.
 
 ```r
-fit_syn <- fit_response_synergy(
-  models = list(tv = fit_tv, social = fit_social, search = fit_search, ...),
-  data   = joint_data
+rolling_fits <- mrm_rolling(
+  data        = channel_data,
+  spend       = "spend",
+  kpi         = "conversions",
+  date        = "week",
+  type        = "gompertz",
+  window_size = 13,   # weeks per window
+  stride      = 4     # weeks between window starts
 )
 ```
 
-With 9 channels, there are 36 possible pairwise interaction terms. To prevent
-overfitting and handle the near-certain multicollinearity between channels,
-all interaction terms are regularized with a **horseshoe prior** — a
-sparsity-inducing prior that shrinks most interactions toward zero while
-allowing a small number of well-identified interactions to remain.
-
-**Important framing:** Interaction terms estimated on attributed KPI volumes
-should be interpreted as *predictive efficiency corrections*, not causal
-synergies. The upstream attribution model that produced the attributed volumes
-already assumed channel independence. These terms capture residual signal in
-the data useful for optimization, not a structural causal claim.
+Each window is fit independently using `fit_response()`, producing a list of
+`mrmfit` objects anchored to their respective date ranges. A companion plot
+shows how each parameter's posterior median and credible interval evolves across
+windows, making seasonal drift in the ceiling (`d`) or midpoint (`e`) directly
+visible.
 
 **Key properties:**
 
-- Per-channel nonlinear response curves (Hill / Log-Logistic parameterization)
-- Horseshoe-regularized pairwise interaction terms
-- Collinearity diagnostics per channel pair — warns when an interaction is
-  likely unidentifiable due to correlated spend patterns
-- Interaction terms are opt-in; default behavior remains independent channels
+- No new model architecture — each window calls `fit_response()` directly
+- `window_size` controls the timescale of local estimation; `stride` controls
+  resolution vs. compute cost
+- Returns a named list of `mrmfit` objects compatible with `mrms_plot_compare()`
+- A dedicated `mrm_plot_rolling()` will show parameter evolution over time with
+  credible ribbons
+
+**Note:** This is a diagnostic and exploratory tool. Because windows are fit
+independently there is no formal pooling across them — adjacent windows do not
+borrow strength from each other. The longer-term time-varying parameter model
+(see below) addresses this limitation with a principled shared estimation
+framework.
 
 ---
+
+## Medium-Term
 
 ### Adstock Support
 
@@ -127,6 +131,64 @@ knowledge about carryover windows for specific channels.
 ---
 
 ## Longer-Term / Exploratory
+
+### Time-Varying Response Curves (`fit_response_tv()`)
+
+**New function:** `fit_response_tv()`
+
+`mrm_rolling()` makes parameter drift visible but estimates each window
+independently. The proper formulation treats the curve parameters themselves as
+functions of time — continuous, smooth, and estimated jointly across all
+observations in a single model. This is a **time-varying parameter model**,
+where `d` (ceiling) and `e` (midpoint) follow a random walk or Gaussian Process
+over time:
+
+$$d_t \sim \mathcal{N}(d_{t-1},\ \sigma_d), \qquad e_t \sim \mathcal{N}(e_{t-1},\ \sigma_e)$$
+
+The evolution variance (`σ_d`, `σ_e`) is estimated from the data and controls
+the timescale of parameter change — a small σ means near-stationary parameters;
+a larger σ allows rapid seasonal swings. Parameters `b` (steepness) and `c`
+(floor) are held fixed at the channel level, as these reflect structural
+properties of the channel rather than seasonal demand.
+
+```r
+fit_tv <- fit_response_tv(
+  data       = channel_data,
+  spend      = "spend",
+  kpi        = "conversions",
+  date       = "week",
+  type       = "gompertz",
+  varying    = c("d", "e"),   # which parameters evolve over time
+  evolution  = "random_walk"  # or "gp" for Gaussian Process
+)
+```
+
+**Relationship to the rolling window approach:** The window size in
+`mrm_rolling()` is a discrete proxy for the GP kernel bandwidth here. A
+13-week window implies parameters change on a ~quarterly timescale — the
+equivalent GP kernel would have a length-scale of ~13 weeks. The time-varying
+model captures this continuously and without boundary artifacts at window edges.
+
+**Relationship to seasonal hierarchical models:** A simpler intermediate
+formulation — year-level partial pooling on `d` alone, fit via `brms` multilevel
+machinery — is worth building first as a stepping stone. It addresses
+year-over-year ceiling shifts (e.g., a growing market) without requiring custom
+Stan code, and its output is directly compatible with the existing `opt_mix()`
+infrastructure.
+
+**Key properties:**
+
+- `evolution = "random_walk"`: AR(1) prior on parameters — tractable in Stan,
+  natural for slowly drifting seasonality
+- `evolution = "gp"`: Gaussian Process prior — more flexible, kernel bandwidth
+  estimated from data, but significantly more expensive
+- Requires hand-written Stan model via `CmdStanR` — outside the `brms` formula
+  interface
+- Returns a `mrmfit_tv` object with time-indexed parameter posteriors and a
+  `mrm_plot_tv()` visualization showing the evolving curve across the observation
+  window
+
+---
 
 ### Ground-Up Joint MMM (`fit_mmm()`)
 

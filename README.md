@@ -103,5 +103,4 @@ Full documentation, tutorials, and examples are available at
 
 See the [Roadmap](https://roeh-marketing.github.io/mrmopt/articles/roadmap.html) for planned
 features, including within-channel hierarchical response curves, rolling window
-parameter drift analysis, time-varying response curves, cross-channel synergy
-modeling, and adstock support.
+parameter drift analysis, time-varying response curves, and adstock support.

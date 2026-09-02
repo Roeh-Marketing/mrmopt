@@ -178,7 +178,7 @@ mrms_plot_compare <- function(models,
     ggplot2::theme(legend.position = "top")
 
   if (layout == "facet") {
-    p <- p + ggplot2::facet_wrap(~ model_id, scales = "free_y")
+    p <- p + ggplot2::facet_wrap(~ model_id, scales = "free")
   }
 
   p
